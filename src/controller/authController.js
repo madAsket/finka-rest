@@ -3,6 +3,7 @@ const user = require("../db/models/user");
 const jwt  = require("jsonwebtoken")
 const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
 const generateToken = (payload)=>{
     return jwt.sign(payload, process.env.JWT_SECRET_KEY, {
         expiresIn:process.env.JWT_EXPIRES_IN
@@ -61,5 +62,22 @@ const login = async (req, res, next)=>{
     })
 }
 
+const authentication = catchAsync(async (req, res, next)=>{
+    let idToken = "";
+    if(req.headers.authorization && req.headers.authorization.startsWith('Bearer')){
+        idToken = req.headers.authorization.split(' ')[1];
+    }
+    if(!idToken){
+        throw new AppError("Please login to get access", 401);
+    }
+    const tokenDetail = jwt.verify(idToken, process.env.JWT_SECRET_KEY)
+    const freshUser = await user.findByPk(tokenDetail.id);
+    if(!freshUser){
+        throw new AppError("User not found or no longer exists", 400);
+    }
+    req.user = freshUser;
+    return next();
+});
 
-module.exports = {signup, login};
+
+module.exports = {signup, login, authentication};

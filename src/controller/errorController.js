@@ -1,3 +1,4 @@
+const AppError = require("../utils/appError")
 const sendDevError = (err, res) =>{
     return res.status(err.statusCode || 500).json({
         status:err.status || "error",
@@ -20,6 +21,15 @@ const sendProdError = (err, res) =>{
 }
 
 const globalErrorHandler = (err, req,res, next)=>{
+    if(err.name === "JsonWebTokenError"){
+        err = new AppError("Invalid auth token", 401);
+    }
+    if(err.name === "SequelizeUniqueConstraintError"){
+        err = new AppError(err.errors[0].message, 400);
+    }
+    if(err.name === "SequelizeValidationError"){
+        err = new AppError(err.errors[0].message, 400);
+    }
     if(process.env.NODE_ENV === "development"){
         return sendDevError(err, res)
     }

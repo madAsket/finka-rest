@@ -4,6 +4,7 @@ const jwt  = require("jsonwebtoken")
 const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+const { json } = require('sequelize');
 const generateToken = (payload)=>{
     return jwt.sign(payload, process.env.JWT_SECRET_KEY, {
         expiresIn:process.env.JWT_EXPIRES_IN
@@ -50,15 +51,29 @@ const login = async (req, res, next)=>{
         throw new AppError("Email or password is incorrect", 401);
     }
     jsonResult = result.toJSON();
-    jsonResult.token = generateToken({
-        id:result.id
-    });
     delete jsonResult.deletedAt;
     delete jsonResult.password;
-    
     return res.json({
         status:"success",
-        data:jsonResult
+        data:{
+            user:jsonResult,
+            token:generateToken({
+                id:result.id
+            })
+        }
+    })
+}
+
+const getCurrenUser = async (req, res, next)=>{
+    const result = req.user;
+    jsonResult = result.toJSON();
+    delete jsonResult.deletedAt;
+    delete jsonResult.password;
+    return res.json({
+        status:"success",
+        data:{
+            user:jsonResult
+        }
     })
 }
 
@@ -80,4 +95,4 @@ const authentication = catchAsync(async (req, res, next)=>{
 });
 
 
-module.exports = {signup, login, authentication};
+module.exports = {signup, login, getCurrenUser, authentication};

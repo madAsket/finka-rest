@@ -1,6 +1,7 @@
 require('dotenv').config({path: `${process.cwd()}/.env`});
 const express = require("express");
 const app = express();
+const cors = require('cors');
 const authRoute = require("./route/authRoute");
 const projectRoute = require("./route/projectRoute");
 const catchAsync = require('./utils/catchAsync');
@@ -12,6 +13,10 @@ const APP_PORT = process.env.NODE_LOCAL_PORT
 
 app.use(express.json());
 
+app.use(cors({
+  origin: process.env.FRONT_URL,
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}));
 
 //Routes
 app.use(`${API_URI}${API_VERSION}/auth`, authRoute);

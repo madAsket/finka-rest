@@ -1,18 +1,26 @@
 const AppError = require("../utils/appError")
 const sendDevError = (err, res) =>{
-    return res.status(err.statusCode || 500).json({
+    let data = {
         status:err.status || "error",
         message:err.message,
         stack:err.stack
-    });
+    };
+    if(err.fieldErrors){
+        data.fieldErrors = err.fieldErrors
+    }
+    return res.status(err.statusCode || 500).json(data);
 }
 
 const sendProdError = (err, res) =>{
     if(err.isOperational){
-        return res.status(err.statusCode || 500).json({
+        let data = {
             status:err.status || "error",
             message:err.message,
-        });
+        };
+        if(err.fieldErrors){
+            data.fieldErrors = err.fieldErrors
+        }
+        return res.status(err.statusCode || 500).json(data);
     }
     return res.status(500).json({
         status:'error',

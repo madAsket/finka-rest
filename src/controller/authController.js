@@ -41,14 +41,16 @@ const signup = async (req, res, next)=>{
 const login = async (req, res, next)=>{
     const {email, password} = req.body;
     if(!email || !password){
-        throw new AppError("Please provide email and password", 400);
+        throw new AppError("Auth error", 400, {
+            email:"Please, provide email",
+            password:"Please, provide password"});
     }
 
     const result = await user.findOne({
         where:{email}
     })
     if(!result || !(await bcrypt.compare(password, result.password))){
-        throw new AppError("Email or password is incorrect", 401);
+        throw new AppError("Auth error", 401,{email:"Email or password are incorrect"});
     }
     jsonResult = result.toJSON();
     delete jsonResult.deletedAt;

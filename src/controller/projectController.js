@@ -1,12 +1,11 @@
-const project = require("../db/models/project");
-const user = require("../db/models/user");
+const {Project, User, UserProjects} = require("../db/models");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync")
 
 const createProject = catchAsync(async (req,res,next)=>{
     const body = req.body;
 
-    const newProject = await project.create({
+    const newProject = await Project.create({
         name:body.name,
         owner:req.user.id
     })
@@ -15,14 +14,21 @@ const createProject = catchAsync(async (req,res,next)=>{
         data:newProject
     })
 });
-// TODO get real users project
+
 const getAllProjects = catchAsync(async (req, res, next)=>{
-    const result = await project.findAll({
-        include:{ model: user, attributes:{exclude: ["password"] }},
-        attributes:{
-            exclude:["deletedAt"],
-        }
-    })
+    const result = await UserProjects.findAll({
+        where: {
+            userId: req.user.id
+        },
+        include: {
+            model: Project,
+            include:{
+                model: User,
+                as:"ownerUser",
+                attributes: { exclude: ['password'] },
+            }
+        },
+    });
     return res.status(201).json({
         status:"success",
         data:result
@@ -31,9 +37,9 @@ const getAllProjects = catchAsync(async (req, res, next)=>{
 
 const getProjectById = catchAsync(async (req, res, next)=>{
     const projectId = req.params.id;
-    const result = await project.findOne({
+    const result = await Project.findOne({
         where:{id:projectId,owner:req.user.id},
-        include:'user'});
+        include:'User'});
     if(!result){
         throw new AppError("Project not found", 400);
     }
@@ -45,9 +51,9 @@ const getProjectById = catchAsync(async (req, res, next)=>{
 
 const updateProject = catchAsync(async (req, res, next)=>{
     const projectId = req.params.id;
-    const result = await project.findOne({
+    const result = await Project.findOne({
         where:{id:projectId,owner:req.user.id},
-        include:'user'});
+        include:'User'});
     if(!result){
         throw new AppError("Project not found", 400);
     }
@@ -61,7 +67,7 @@ const updateProject = catchAsync(async (req, res, next)=>{
 
 const deleteProject = catchAsync(async (req, res, next)=>{
     const projectId = req.params.id;
-    const result = await project.findOne({
+    const result = await Project.findOne({
         where:{id:projectId,owner:req.user.id}});
     if(!result){
         throw new AppError("Project not found", 400);

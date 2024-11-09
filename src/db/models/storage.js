@@ -2,9 +2,8 @@
 const {
   Model
 } = require('sequelize');
-
 module.exports = (sequelize, DataTypes) => {
-  class Project extends Model {
+  class Storage extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -12,50 +11,35 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      // 
     }
   }
-  Project.init({
+  Storage.init({
     name: {
-      type: DataTypes.STRING,
       allowNull:false,
-      validate:{
-        notNull:{
-          msg: 'Project name cannot be null'
-        },
-        notEmpty:{
-          msg:"Project name cannot be empty"
-        }
-      }
+      type: DataTypes.STRING
     },
     currency:{
       type: DataTypes.STRING,
       allowNull:false,
       defaultValue:"EUR"
     },
-    owner:{
-      type:DataTypes.INTEGER,
+    balance:{
+      type: DataTypes.DECIMAL(20, 10),
       allowNull:false,
-      references:{
-        model:'User',
-        key:"id"
-      }
+      defaultValue:0.0000000000
     },
-    createdAt: {
+    projectId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      type: DataTypes.DATE
+      references: {
+        model: 'Project',
+        key: 'id',
+      },
     },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE
-    },
-    deletedAt: {
-      type: DataTypes.DATE
-    }
   }, {
     sequelize,
-    modelName: 'Project',
+    modelName: 'Storage',
     paranoid:true
   });
-  return Project;
+  return Storage;
 };

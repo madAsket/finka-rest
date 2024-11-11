@@ -1,6 +1,6 @@
 const router = require("express").Router();
-const { addStorage, getAllStorages } = require("../controller/balanceController");
-const { createProject, checkAccessByOwner, getAllProjects, getProjectById, updateProject, deleteProject } = require("../controller/projectController");
+const { addStorage, getAllStorages, addDeposit, getAllDeposits} = require("../controller/balanceController");
+const { createProject, getAllProjects, getProjectById, updateProject, deleteProject } = require("../controller/projectController");
 const { authentication } = require("../controller/authController");
 
 //projects controllers
@@ -12,5 +12,6 @@ router.route("/:id").get(authentication, getProjectById)
 
 // storages conrollers
 router.route("/:id/storages/").post(authentication, addStorage).get(authentication, getAllStorages);
+router.route("/:id/deposits/").post(authentication, addDeposit).get(authentication, getAllDeposits);
 
 module.exports = router;

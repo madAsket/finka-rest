@@ -52,6 +52,7 @@ const getAllStorages = catchAsync(async (req,res, next)=>{
         where: {
             projectId: req.params.id
         },
+        order:['id']
     });
     return res.status(201).json({
         status:"success",
@@ -60,9 +61,53 @@ const getAllStorages = catchAsync(async (req,res, next)=>{
 });
 
 const addDeposit = catchAsync(async(req, res, next)=>{
+    const {storage, amount, author, depositedAt} = req.body;
+    const projectId = req.params.id;
+    const t = await sequelize.transaction();
+    let deposit = null;
+    try {
+        let storageItem = await Storage.findOne({
+            where:{
+                id:storage,
+                projectId:projectId
+            }
+        }, { transaction: t });
+        deposit = await Deposit.create(
+            {
+                projectId: projectId,
+                storageId: storage,
+                amount:amount,
+                userId:author,
+                depositedAt:depositedAt
+            },
+            { transaction: t },
+        );
+        storageItem = await storageItem.increment('balance', 
+            { by: deposit.amount }, 
+            { transaction: t });
+    
+        await t.commit();
+    } catch (error) {
+        console.log(error);
+        await t.rollback();
+        throw new AppError(error.message, 401)
+    }
+    const result = await Deposit.findOne({
+        where: {
+            id:deposit.id
+        },
+        include: [
+            {
+                model: Storage,
+            },
+            {
+                model: User,
+            },
+        ]
+    });
     return res.status(201).json({
         status:"success",
-        // data:result
+        data:result
     })
 });
 

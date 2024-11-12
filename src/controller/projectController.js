@@ -38,7 +38,7 @@ const getAllProjects = catchAsync(async (req, res, next)=>{
 const getProjectById = catchAsync(async (req, res, next)=>{
     const projectId = req.params.id;
     const result = await Project.findOne({
-        where:{id:projectId,owner:req.user.id},
+        where:{id:projectId, owner:req.user.id},
         include:'User'});
     if(!result){
         throw new AppError("Project not found", 400);
@@ -79,14 +79,22 @@ const deleteProject = catchAsync(async (req, res, next)=>{
     })
 });
 
-const checkAccessByOwner = (ownerID) => {
-    const checkPermission = (req, res, next) =>{
-        if(ownerID !== req.user.id){
-            throw new AppError("You don't have permission to perform this operation", 403);
+const getProjectUsers = catchAsync(async (req,res, next)=>{
+    const projectId = req.params.id;
+    const project = await Project.findOne({
+        where:{id:projectId}});
+    
+    const users = await project.getUsers({
+        attributes:{
+            exclude:['password']
         }
-        return next();
-    }
-    return checkPermission;
-}
+    });
+    return res.status(201).json({
+        status:"success",
+        data:users
+    })
+});
+
+
 module.exports = {createProject, getAllProjects, getProjectById, 
-    checkAccessByOwner, updateProject, deleteProject}
+ updateProject, deleteProject, getProjectUsers}

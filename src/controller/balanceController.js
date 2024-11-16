@@ -4,7 +4,8 @@ const {sequelize,
     UserProjects, 
     Storage, 
     Deposit, 
-    ExpenseCategory, ExpenseLimit, Expense} = require("../db/models");
+    ExpenseCategory, ExpenseLimit, Expense,
+    Transfer} = require("../db/models");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync")
 const { Op } = require("sequelize");
@@ -320,9 +321,97 @@ const getMonthExpenses = catchAsync(async (req,res,next)=>{
     })
 });
 
+const getAllTransfers = catchAsync(async (req,res, next)=>{
+    const projectId = req.params.id;
+    const transfers = await Transfer.findAll({
+        where:{
+            projectId:projectId
+        },
+        include:[
+            {
+                model:Storage,
+                as:"fromStorage"
+            },
+            {
+                model:Storage,
+                as:"toStorage"
+            },
+            {
+                model:User,
+                attributes: { exclude: ['password'] },
+            }
+        ],
+        order: [['transferredAt', 'DESC']],
+    });
+    return res.status(201).json({
+        status:"success",
+        data:transfers
+    })
+});
+
+const addTransfer = catchAsync(async (req, res, next)=>{
+    const projectId = req.params.id;
+    const {fromStorage, toStorage, transferredAmount, receivedAmount, transferredAt, transferrer} = req.body;
+    const t = await sequelize.transaction();
+    let transfer;
+    try {
+       transfer = await Transfer.create({
+            projectId:projectId,
+            fromStorageId:fromStorage,
+            toStorageId:toStorage,
+            transferredAmount:transferredAmount,
+            receivedAmount:receivedAmount,
+            transferredAt:transferredAt,
+            transferrerId:transferrer,
+            currencyRate:transferredAmount/receivedAmount //200RUB to 2EUR => 200/2 = 100; 
+        },
+        { transaction: t });
+        await Storage.increment({balance:-transferredAmount},
+        {where: {
+            id: fromStorage,
+        }}, 
+        { transaction: t });
+        await Storage.increment({balance:receivedAmount},
+        { where: {
+            id: toStorage,
+        }}, 
+        { transaction: t });
+
+        await t.commit();
+    } catch (error) {
+        console.log(error);
+        await t.rollback();
+        throw new AppError(error.message, 401)
+    }
+    const transferResult = await Transfer.findOne({
+        where:{
+            id:transfer.id
+        },
+        include:[
+            {
+                model:Storage,
+                as:"fromStorage"
+            },
+            {
+                model:Storage,
+                as:"toStorage"
+            },
+            {
+                model:User,
+                attributes: { exclude: ['password'] },
+            }
+        ],
+    })
+    return res.status(201).json({
+        status:"success",
+        data:transferResult
+    })
+});
+
 module.exports = {
     addStorage, getAllStorages, 
     getAllDeposits, addDeposit, 
     addExpenseCategory, getMonthsExpenseCategories,
-    addExpense, getMonthExpenses
+    addExpense, getMonthExpenses,
+    addTransfer, getAllTransfers
 }

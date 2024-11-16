@@ -2,7 +2,8 @@ const router = require("express").Router();
 const { addStorage, getAllStorages, 
     addDeposit, getAllDeposits, 
     addExpenseCategory, getMonthsExpenseCategories,
-    addExpense, getMonthExpenses} = require("../controller/balanceController");
+    addExpense, getMonthExpenses,
+    addTransfer, getAllTransfers} = require("../controller/balanceController");
 const { createProject, getAllProjects, getProjectById, updateProject, deleteProject, getProjectUsers } = require("../controller/projectController");
 const { authentication } = require("../controller/authController");
 
@@ -21,6 +22,9 @@ router.route("/:id/deposits/").post(authentication, addDeposit).get(authenticati
 
 //project expense categories controllers
 router.route("/:id/expensecategories/").post(authentication, addExpenseCategory).get(authentication, getMonthsExpenseCategories);
+
+//project transfers controllers
+router.route("/:id/transfers/").post(authentication, addTransfer).get(authentication, getAllTransfers);
 
 //project expense controllers
 router.route("/:id/expenses/").post(authentication, addExpense).get(authentication, getMonthExpenses);

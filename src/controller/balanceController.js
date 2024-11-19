@@ -9,6 +9,7 @@ const {sequelize,
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync")
 const { Op } = require("sequelize");
+const CurrencyService = require("../services/CurrencyService")
 
 const addStorage = catchAsync(async (req,res,next)=>{
     const {name, currency, balance} = req.body;
@@ -185,14 +186,31 @@ const addExpenseCategory = catchAsync(async (req, res, next)=>{
 
 const getMonthsExpenseCategories = catchAsync(async (req,res, next)=>{
     let result = [];
+    const date = new Date();
+    const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     let categories = await ExpenseCategory.findAll({
         where: {
             projectId: req.params.id
         },
-        // order: [['depositedAt', 'DESC']],
+        include:[{
+            model:Expense,
+            include:[Storage],
+            where:{
+                expensedAt: {
+                    [Op.between]: [startDate, endDate],     
+                }
+            }
+        }]
     });
-    // 
-    const date = new Date();
+    const project = await Project.findOne({
+        where:{
+            id:req.params.id
+        }
+    });
+    const baseCurrency = project.currency;
+    const {rates} = await CurrencyService.getProjectCurrencySettings(baseCurrency);
+
     for await (let cat of categories){
         const limit = await ExpenseLimit.findOrCreate({
             where:{
@@ -202,8 +220,23 @@ const getMonthsExpenseCategories = catchAsync(async (req,res, next)=>{
                 year:date.getFullYear()
             } 
         });
+        const expenses = cat.Expenses;
+        let spent = 0.0;
+        expenses.forEach((item)=>{
+            const amount = Number(item.amount);
+            const expenseCurrency = item.Storage.currency;
+            if(expenseCurrency === baseCurrency){
+                spent += amount;
+            }else{
+                const rate = rates[expenseCurrency];
+                if(rate){
+                    spent += (amount * rate);
+                }
+            }
+        });
         cat = cat.toJSON()
         cat.limit = limit[0];
+        cat.spent = spent;
         result.push(cat);
     }
     return res.status(201).json({

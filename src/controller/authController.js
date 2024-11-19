@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken")
 const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+const CurrencyService = require("../services/CurrencyService")
 const generateToken = (payload) => {
     return jwt.sign(payload, process.env.JWT_SECRET_KEY, {
         expiresIn: process.env.JWT_EXPIRES_IN
@@ -40,6 +41,7 @@ const signup = async (req, res, next) => {
     const result = newUser.toJSON();
     delete result.deletedAt;
     delete result.password;
+    const currencySettings  = await CurrencyService.getProjectCurrencySettings(currentProject.Project.currency);
     return res.status(201).json({
         status: 'success',
         data: {
@@ -47,7 +49,8 @@ const signup = async (req, res, next) => {
             token: generateToken({
                 id: result.id
             }),
-            currentProject: currentProject.toJSON()
+            currentProject: currentProject.toJSON(),
+            currency:currencySettings
         }
     });
 }
@@ -79,6 +82,7 @@ const login = async (req, res, next) => {
             model: Project
         },
     });
+    const currencySettings  = await CurrencyService.getProjectCurrencySettings(currentProject.Project.currency);
     return res.json({
         status: "success",
         data: {
@@ -86,7 +90,8 @@ const login = async (req, res, next) => {
             token: generateToken({
                 id: result.id
             }),
-            currentProject:currentProject.toJSON()
+            currentProject:currentProject.toJSON(),
+            currency:currencySettings
         }
     })
 }
@@ -105,11 +110,13 @@ const getCurrenUser = async (req, res, next) => {
             model: Project
         },
     });
+    const currencySettings  = await CurrencyService.getProjectCurrencySettings(currentProject.Project.currency);
     return res.json({
         status: "success",
         data: {
             user: jsonResult,
-            currentProject: currentProject.toJSON()
+            currentProject: currentProject.toJSON(),
+            currency:currencySettings
         }
     })
 }

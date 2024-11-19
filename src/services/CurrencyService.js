@@ -1,6 +1,6 @@
 const AbstractService = require("./AbstractService");
 const currencyConfig = require("../db/config/currencyConfig")
-const {sequelize, CurrencyRate} = require("../db/models");
+const {sequelize, CurrencyRate,} = require("../db/models");
 
 class CurrencyService extends AbstractService {
 

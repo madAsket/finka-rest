@@ -11,7 +11,7 @@ const generateToken = (payload) => {
     });
 }
 
-const signup = async (req, res, next) => {
+const signup = catchAsync(async (req, res, next) => {
     const body = req.body;
     const newUser = await User.create({
         userType: '1',
@@ -53,9 +53,9 @@ const signup = async (req, res, next) => {
             currency:currencySettings
         }
     });
-}
+});
 
-const login = async (req, res, next) => {
+const login = catchAsync(async (req, res, next) => {
     const { email, password } = req.body;
     if (!email || !password) {
         throw new AppError("Auth error", 400, {
@@ -94,9 +94,9 @@ const login = async (req, res, next) => {
             currency:currencySettings
         }
     })
-}
+});
 
-const getCurrenUser = async (req, res, next) => {
+const getCurrenUser = catchAsync(async (req, res, next) => {
     const result = req.user;
     jsonResult = result.toJSON();
     delete jsonResult.deletedAt;
@@ -119,7 +119,7 @@ const getCurrenUser = async (req, res, next) => {
             currency:currencySettings
         }
     })
-}
+});
 
 const authentication = catchAsync(async (req, res, next) => {
     let idToken = "";

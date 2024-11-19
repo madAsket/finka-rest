@@ -3,7 +3,8 @@ const { addStorage, getAllStorages,
     addDeposit, getAllDeposits, 
     addExpenseCategory, getMonthsExpenseCategories,
     addExpense, getMonthExpenses,
-    addTransfer, getAllTransfers} = require("../controller/balanceController");
+    addTransfer, getAllTransfers, 
+    balanceData} = require("../controller/balanceController");
 const { createProject, getAllProjects, getProjectById, updateProject, deleteProject, getProjectUsers } = require("../controller/projectController");
 const { authentication } = require("../controller/authController");
 
@@ -28,5 +29,6 @@ router.route("/:id/transfers/").post(authentication, addTransfer).get(authentica
 
 //project expense controllers
 router.route("/:id/expenses/").post(authentication, addExpense).get(authentication, getMonthExpenses);
+router.route("/:id/balance/").get(authentication, balanceData);
 
 module.exports = router;

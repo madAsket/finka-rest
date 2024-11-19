@@ -9,7 +9,8 @@ const {sequelize,
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync")
 const { Op } = require("sequelize");
-const CurrencyService = require("../services/CurrencyService")
+const CurrencyService = require("../services/CurrencyService");
+const BalanceService = require("../services/BalanceService");
 
 const addStorage = catchAsync(async (req,res,next)=>{
     const {name, currency, balance} = req.body;
@@ -57,7 +58,7 @@ const addStorage = catchAsync(async (req,res,next)=>{
 });
 
 const getAllStorages = catchAsync(async (req,res, next)=>{
-    const noEmptyCondition = req.query.noempty ? {[Op.gt]: 0} : {[Op.gte]: 0};
+    const noEmptyCondition = req.query.noempty ? {[Op.gt]: 0} : {[Op.gte]: 0}; //FIX problem with balance below zero;
     const result = await Storage.findAll({
         where: {
             projectId: req.params.id,
@@ -185,63 +186,10 @@ const addExpenseCategory = catchAsync(async (req, res, next)=>{
 });
 
 const getMonthsExpenseCategories = catchAsync(async (req,res, next)=>{
-    let result = [];
-    const date = new Date();
-    const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
-    const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-    let categories = await ExpenseCategory.findAll({
-        where: {
-            projectId: req.params.id
-        },
-        include:[{
-            model:Expense,
-            include:[Storage],
-            where:{
-                expensedAt: {
-                    [Op.between]: [startDate, endDate],     
-                }
-            }
-        }]
-    });
-    const project = await Project.findOne({
-        where:{
-            id:req.params.id
-        }
-    });
-    const baseCurrency = project.currency;
-    const {rates} = await CurrencyService.getProjectCurrencySettings(baseCurrency);
-
-    for await (let cat of categories){
-        const limit = await ExpenseLimit.findOrCreate({
-            where:{
-                expenseCategoryId:cat.id,
-                projectId:req.params.id,
-                month:date.getMonth()+1,
-                year:date.getFullYear()
-            } 
-        });
-        const expenses = cat.Expenses;
-        let spent = 0.0;
-        expenses.forEach((item)=>{
-            const amount = Number(item.amount);
-            const expenseCurrency = item.Storage.currency;
-            if(expenseCurrency === baseCurrency){
-                spent += amount;
-            }else{
-                const rate = rates[expenseCurrency];
-                if(rate){
-                    spent += (amount * rate);
-                }
-            }
-        });
-        cat = cat.toJSON()
-        cat.limit = limit[0];
-        cat.spent = spent;
-        result.push(cat);
-    }
+    const {categories} = await BalanceService.getMonthExpenseCategories(req.params.id);
     return res.status(201).json({
         status:"success",
-        data:result
+        data:categories
     })
 });
 
@@ -441,10 +389,25 @@ const addTransfer = catchAsync(async (req, res, next)=>{
     })
 });
 
+const balanceData = catchAsync(async (req, res, next)=>{
+    //GET TOTAL BALANCE FROM ALL STORAGES / CONVER TO CURRENCY;
+    //GET LIMITS FROM ALL LIMITS AND EXPENSES FOR CURRENT MONTH;
+    const {totalLimit, totalSpent, totalBalance} = await BalanceService.getProjectBalance(req.params.id);
+    return res.status(201).json({
+        status:"success",
+        data:{
+            totalBalance:totalBalance,
+            spent:totalSpent,
+            limit:totalLimit
+        }
+    })
+});
+
 module.exports = {
     addStorage, getAllStorages, 
     getAllDeposits, addDeposit, 
     addExpenseCategory, getMonthsExpenseCategories,
     addExpense, getMonthExpenses,
-    addTransfer, getAllTransfers
+    addTransfer, getAllTransfers,
+    balanceData
 }

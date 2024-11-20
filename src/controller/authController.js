@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const CurrencyService = require("../services/CurrencyService")
+
 const generateToken = (payload) => {
     return jwt.sign(payload, process.env.JWT_SECRET_KEY, {
         expiresIn: process.env.JWT_EXPIRES_IN
@@ -13,10 +14,19 @@ const generateToken = (payload) => {
 
 const signup = catchAsync(async (req, res, next) => {
     const body = req.body;
+    const exist = await User.findOne({
+        where:{
+            email:body.email
+        }
+    });
+    if(exist){
+        throw new AppError("User already exists", 400, {
+            email:"This email already taken."
+        });
+    }
     const newUser = await User.create({
         userType: '1',
-        firstName: body.firstName,
-        lastName: body.lastName,
+        firstName: body.username,
         email: body.email,
         password: body.password,
         confirmPassword: body.confirmPassword

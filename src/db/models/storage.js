@@ -1,7 +1,8 @@
 'use strict';
 const {
-  Model
+  Model,
 } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Storage extends Model {
     /**
@@ -22,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
     currency:{
       type: DataTypes.STRING,
       allowNull:false,
-      defaultValue:"EUR"
+      defaultValue:"EUR",
     },
     balance:{
       type: DataTypes.DECIMAL(20, 10),
@@ -42,5 +43,6 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'Storage',
     paranoid:true
   });
+
   return Storage;
 };

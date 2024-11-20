@@ -11,6 +11,13 @@ class CurrencyService extends AbstractService {
         }
         CurrencyService.serviceInstance = this;
     }
+    getCurrencyList(){
+        let currencyNames = {};
+        for(const cType of Object.keys(currencyConfig)){
+            Object.assign(currencyNames, currencyConfig[cType]);
+        }
+        return currencyNames;
+    }
     async getProjectCurrencySettings(baseCurrency){
         const rates = await CurrencyRate.findAll({
             where:{

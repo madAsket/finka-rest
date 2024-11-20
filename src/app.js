@@ -40,6 +40,6 @@ app.listen(APP_PORT, function(){
 });
 
 
-// runCronJobs();
+runCronJobs();
 
 // sequelize.sync();

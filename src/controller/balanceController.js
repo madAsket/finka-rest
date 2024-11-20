@@ -24,10 +24,15 @@ const addStorage = catchAsync(async (req,res,next)=>{
     if(!userHasProject){
         throw new AppError("Project not found", 400);
     }
+    if(!CurrencyService.getCurrencyList()[currency]){
+        throw new AppError("Project not found", 400,{
+            currency:"Currency is not valid"
+        });
+    }
     let storage = await Storage.create({
         projectId:projectId,
         name:name,
-        currency:currency.value
+        currency:currency
     });
     if(balance){
         const t = await sequelize.transaction();
@@ -64,7 +69,7 @@ const getAllStorages = catchAsync(async (req,res, next)=>{
             projectId: req.params.id,
             balance:noEmptyCondition
         },
-        order:['id']
+        order:[['updatedAt', "DESC"]]
     });
     return res.status(201).json({
         status:"success",

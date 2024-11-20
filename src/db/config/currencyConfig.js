@@ -151,7 +151,7 @@ module.exports = {
             "type": "fiat"
         },
         "RUB": {
-            "symbol": "RUB",
+            "symbol": "₽",
             "name": "Russian Ruble",
             "symbol_native": "руб.",
             "decimal_digits": 2,

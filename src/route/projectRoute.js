@@ -5,7 +5,8 @@ const { addStorage, getAllStorages,
     addExpense, getMonthExpenses,
     addTransfer, getAllTransfers, 
     balanceData} = require("../controller/balanceController");
-const { createProject, getAllProjects, getProjectById, updateProject, deleteProject, getProjectUsers } = require("../controller/projectController");
+const { createProject, getAllProjects, getProjectById, updateProject, deleteProject, getProjectUsers, 
+    switchProject } = require("../controller/projectController");
 const { authentication } = require("../controller/authController");
 
 //projects controllers
@@ -14,6 +15,8 @@ router.route("/").post(authentication, createProject)
 router.route("/:id").get(authentication, getProjectById)
                     .patch(authentication, updateProject)
                     .delete(authentication, deleteProject);
+                    
+router.route("/:id/switch").post(authentication, switchProject);
 //project users conrollers
 router.route("/:id/users/").get(authentication, getProjectUsers);
 

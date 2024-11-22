@@ -130,8 +130,6 @@ const switchProject = catchAsync(async (req, res, next)=>{
                     projectId:projectId,
                     userId:req.user.id
                 },
-                returning: ["*"],
-                include:[Project]
             },
             { transaction: t },
         );
@@ -177,8 +175,8 @@ const deleteProject = catchAsync(async (req, res, next)=>{
 const getProjectUsers = catchAsync(async (req,res, next)=>{
     const projectId = req.params.id;
     const project = await Project.findOne({
-        where:{id:projectId}});
-    
+        where:{id:projectId}
+    });
     const users = await project.getUsers({
         attributes:{
             exclude:['password']
@@ -190,6 +188,47 @@ const getProjectUsers = catchAsync(async (req,res, next)=>{
     })
 });
 
+const inviteUserToProject = catchAsync(async (req, res, next)=>{
+    const projectId = req.params.id;
+    const {email} = req.body;
+    
+    const user = await User.findOne({
+        where:{
+            email:email
+        },
+        attributes: { exclude: ['password'] },
+    });
+    if(!user){
+        throw new AppError("User not found", 400, {
+            email:"User with this email not found"
+        });
+    }
+    if(user.id === req.user.id){
+        throw new AppError("Wrong user", 400, {
+            email:"You're already in the project"
+        });
+    };
+    const project = await UserProjects.findOne({
+        where:{
+            projectId: projectId,
+            userId:user.id
+        },
+    });
+    if(project){
+        throw new AppError("Wrong user", 400, {
+            email:"User's already in the project"
+        });
+    }
+    await UserProjects.create({
+        projectId: projectId,
+        userId:user.id
+    });
+    return res.status(201).json({
+        status:"success",
+        data:user
+    })
+});
 
 module.exports = {createProject, getAllProjects, getProjectById, 
- updateProject, deleteProject, getProjectUsers, switchProject}
+ updateProject, deleteProject, getProjectUsers, switchProject,
+ inviteUserToProject}

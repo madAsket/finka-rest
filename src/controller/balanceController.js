@@ -102,7 +102,7 @@ const addDeposit = catchAsync(async(req, res, next)=>{
         storageItem = await storageItem.increment('balance', 
             { by: deposit.amount }, 
             { transaction: t });
-    
+
         await t.commit();
     } catch (error) {
         console.log(error);
@@ -394,6 +394,94 @@ const addTransfer = catchAsync(async (req, res, next)=>{
     })
 });
 
+const deleteExpense = catchAsync(async (req, res, next)=>{
+    const projectId = req.params.id;
+    const expenseId = req.params.expenseId;
+    const t = await sequelize.transaction();
+    try {
+        const expense = await Expense.findOne({
+            where:{
+                id:expenseId,
+            },
+            include:[Storage]
+        },{transaction:t});
+        await expense.Storage.increment('balance', 
+            { by: expense.amount }, 
+            { transaction: t });
+        await expense.destroy({ transaction: t });
+        await t.commit();
+    } catch (error) {
+        await t.rollback();
+        throw new AppError(error.message, 401);
+    }
+    return res.status(201).json({
+        status:"success"
+    });
+});
+
+const deleteTransfer = catchAsync(async (req, res, next)=>{
+    const projectId = req.params.id;
+    const transferId = req.params.transferId;
+    const t = await sequelize.transaction();
+    try {
+        const transfer = await Transfer.findOne({
+            where:{
+                id:transferId,
+            },
+            include:[
+                {
+                    model:Storage,
+                    as:"fromStorage"
+                },
+                {
+                    model:Storage,
+                    as:"toStorage"
+                },
+            ],
+        },{transaction:t});
+        await transfer.fromStorage.increment('balance', 
+            { by: transfer.transferredAmount }, 
+            { transaction: t });
+        await transfer.toStorage.increment('balance', 
+            { by: -transfer.receivedAmount }, 
+            { transaction: t });
+        await transfer.destroy({ transaction: t });
+        await t.commit();
+    } catch (error) {
+        await t.rollback();
+        throw new AppError(error.message, 401);
+    }
+    return res.status(201).json({
+        status:"success"
+    });
+});
+
+const deleteDeposit = catchAsync(async (req, res, next)=>{
+    const projectId = req.params.id;
+    const depositId = req.params.depositId;
+    const t = await sequelize.transaction();
+    try {
+        const deposit = await Deposit.findOne({
+            where:{
+                id:depositId,
+            },
+            include:[Storage]
+        },{transaction:t});
+        //TODO maybe in hooks?
+        await deposit.Storage.increment('balance', 
+            { by: -deposit.amount }, 
+            { transaction: t });
+        await deposit.destroy({ transaction: t });
+        await t.commit();
+    } catch (error) {
+        await t.rollback();
+        throw new AppError(error.message, 401);
+    }
+    return res.status(201).json({
+        status:"success"
+    });
+});
+
 const balanceData = catchAsync(async (req, res, next)=>{
     //GET TOTAL BALANCE FROM ALL STORAGES / CONVER TO CURRENCY;
     //GET LIMITS FROM ALL LIMITS AND EXPENSES FOR CURRENT MONTH;
@@ -408,11 +496,12 @@ const balanceData = catchAsync(async (req, res, next)=>{
     })
 });
 
+
 module.exports = {
     addStorage, getAllStorages, 
-    getAllDeposits, addDeposit, 
+    getAllDeposits, addDeposit, deleteDeposit,
     addExpenseCategory, getMonthsExpenseCategories,
-    addExpense, getMonthExpenses,
-    addTransfer, getAllTransfers,
+    addExpense, getMonthExpenses,deleteExpense,
+    addTransfer, getAllTransfers, deleteTransfer,
     balanceData
 }

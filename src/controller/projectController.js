@@ -92,16 +92,14 @@ const getProjectById = catchAsync(async (req, res, next)=>{
 const updateProject = catchAsync(async (req, res, next)=>{
     const projectId = req.params.id;
     const result = await Project.findOne({
-        where:{id:projectId,owner:req.user.id},
-        include:'User'});
+        where:{id:projectId}});
     if(!result){
         throw new AppError("Project not found", 400);
     }
     result.name = req.body.name;
-    const updated  = await result.save();
+    await result.save();
     return res.status(201).json({
-        status:"success",
-        data:updated
+        status:"success"
     })
 });
 

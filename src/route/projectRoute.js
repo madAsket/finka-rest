@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { addStorage, getAllStorages, 
+const { addStorage, getAllStorages, updateStorage,
     addDeposit, getAllDeposits, 
     addExpenseCategory, getMonthsExpenseCategories,
     addExpense, getMonthExpenses,
@@ -7,7 +7,7 @@ const { addStorage, getAllStorages,
     balanceData,
     deleteExpense,
     deleteTransfer,
-    deleteDeposit} = require("../controller/balanceController");
+    deleteDeposit, updateDeposit} = require("../controller/balanceController");
 const { createProject, getAllProjects, getProjectById, updateProject, deleteProject, getProjectUsers, 
     switchProject, 
     inviteUserToProject} = require("../controller/projectController");
@@ -27,12 +27,14 @@ router.route("/:id/users/").get(authentication, getProjectUsers)
                             .post(authentication, inviteUserToProject);
 
 //project storages conrollers
-router.route("/:id/storages/").post(authentication, addStorage).get(authentication, getAllStorages);
+router.route("/:id/storages/").post(authentication, addStorage)
+                                .get(authentication, getAllStorages);
+router.route("/:id/storages/:storageId").patch(authentication, updateStorage);                         
 
 //project deposits controllers
 router.route("/:id/deposits/").post(authentication, addDeposit)
                                 .get(authentication, getAllDeposits);
-router.route("/:id/deposits/:depositId").delete(authentication, deleteDeposit);
+router.route("/:id/deposits/:depositId").delete(authentication, deleteDeposit).patch(authentication, updateDeposit);
 
 //project expense categories controllers
 router.route("/:id/expensecategories/").post(authentication, addExpenseCategory).get(authentication, getMonthsExpenseCategories);

@@ -497,9 +497,62 @@ const balanceData = catchAsync(async (req, res, next)=>{
 });
 
 
+const updateStorage = catchAsync(async (req, res, next)=>{
+    const projectId = req.params.id;
+    const storageId = req.params.storageId;
+    const result = await Storage.findOne({
+        where:{projectId:projectId, id:storageId}});
+    if(!result){
+        throw new AppError("Storage not found", 400);
+    }
+    result.name = req.body.name;
+    await result.save();
+    return res.status(201).json({
+        status:"success"
+    })
+});
+
+const updateDeposit = catchAsync(async (req, res, next)=>{
+    const projectId = req.params.id;
+    const depositId = req.params.depositId;
+    const deposit = await Deposit.update(
+        {   
+            userId:req.body.author,
+            depositedAt:req.body.depositedAt
+        },
+        {
+            where:{
+                projectId:projectId, 
+                id:depositId
+            }
+        }
+    );
+    if(!deposit){
+        throw new AppError("Deposit not found", 400);
+    }
+    const result = await Deposit.findOne({
+        where:{
+            id:depositId
+        },  
+        include: [
+            {
+                model: Storage,
+            },
+            {
+                model: User,
+                attributes: { exclude: ['password'] },
+            },
+        ]
+    });
+    return res.status(201).json({
+        status:"success",
+        data:result
+    })
+});
+
 module.exports = {
-    addStorage, getAllStorages, 
-    getAllDeposits, addDeposit, deleteDeposit,
+    addStorage, getAllStorages, updateStorage,
+    getAllDeposits, addDeposit, deleteDeposit,updateDeposit,
     addExpenseCategory, getMonthsExpenseCategories,
     addExpense, getMonthExpenses,deleteExpense,
     addTransfer, getAllTransfers, deleteTransfer,

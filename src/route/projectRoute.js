@@ -6,8 +6,11 @@ const { addStorage, getAllStorages, updateStorage,
     addTransfer, getAllTransfers, 
     balanceData,
     deleteExpense,
-    deleteTransfer,
-    deleteDeposit, updateDeposit} = require("../controller/balanceController");
+    deleteTransfer, updateTransfer,
+    deleteDeposit, updateDeposit,
+    updateExpense,
+    updateExpenseCategory,
+    } = require("../controller/balanceController");
 const { createProject, getAllProjects, getProjectById, updateProject, deleteProject, getProjectUsers, 
     switchProject, 
     inviteUserToProject} = require("../controller/projectController");
@@ -38,15 +41,18 @@ router.route("/:id/deposits/:depositId").delete(authentication, deleteDeposit).p
 
 //project expense categories controllers
 router.route("/:id/expensecategories/").post(authentication, addExpenseCategory).get(authentication, getMonthsExpenseCategories);
+router.route("/:id/expensecategories/:catId").patch(authentication, updateExpenseCategory);
 
 //project transfers controllers
 router.route("/:id/transfers/").post(authentication, addTransfer).get(authentication, getAllTransfers);
-router.route("/:id/transfers/:transferId").delete(authentication, deleteTransfer);
+router.route("/:id/transfers/:transferId").delete(authentication, deleteTransfer)
+                                        .patch(authentication, updateTransfer);
 
 //project expense controllers
 router.route("/:id/expenses/").post(authentication, addExpense)
                                 .get(authentication, getMonthExpenses)
 router.route("/:id/expenses/:expenseId").delete(authentication, deleteExpense)
+                                        .patch(authentication, updateExpense)
 
 router.route("/:id/balance/").get(authentication, balanceData);
 

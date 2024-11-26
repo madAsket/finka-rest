@@ -234,14 +234,15 @@ const addExpense = catchAsync(async (req, res, next)=>{
             { transaction: t },
         );
         const date = new Date(expensedAt);
-        const [limit, created] = await ExpenseLimit.findOrCreate({
-            where:{
-                projectId: projectId,
-                expenseCategoryId:category,
-                month:date.getMonth()+1,
-                year:date.getFullYear()
-            },
-             transaction: t 
+        const [limit, created] = await ExpenseLimit.findOrCreate(
+            {
+                where:{
+                    projectId: projectId,
+                    expenseCategoryId:category,
+                    month:date.getMonth()+1,
+                    year:date.getFullYear()
+                },
+                transaction: t
             },
         );
         await selectedStorage.increment('balance', 
@@ -550,11 +551,185 @@ const updateDeposit = catchAsync(async (req, res, next)=>{
     })
 });
 
+const updateTransfer = catchAsync(async (req, res, next)=>{
+    const projectId = req.params.id;
+    const transferId = req.params.transferId;
+    const transfer = await Transfer.update(
+        {   
+            userId:req.body.author,
+            transferredAt:req.body.transferredAt
+        },
+        {
+            where:{
+                projectId:projectId, 
+                id:transferId
+            }
+        }
+    );
+    if(!transfer){
+        throw new AppError("Transfer not found", 400);
+    }
+    const result = await Transfer.findOne({
+        where:{
+            id:transferId
+        },  
+        include:[
+            {
+                model:Storage,
+                as:"fromStorage"
+            },
+            {
+                model:Storage,
+                as:"toStorage"
+            },
+            {
+                model:User,
+                attributes: { exclude: ['password'] },
+            }
+        ],
+    });
+    return res.status(201).json({
+        status:"success",
+        data:result
+    })
+});
+
+const updateExpense = catchAsync(async (req, res, next)=>{
+    const projectId = req.params.id;
+    const expenseId = req.params.expenseId;
+    const {description, spender, category, expensedAt} = req.body;
+    const t = await sequelize.transaction();
+    try {
+        const expense = await Expense.update(
+            {
+                description:description,
+                spenderId:spender,
+                expenseCategoryId:category,
+                expensedAt:expensedAt,
+            },
+            {
+                where:{
+                    id:expenseId,
+                    projectId:projectId
+                }
+            },
+            { transaction: t },
+        );
+        if(!expense){
+            throw new AppError("Expense not found", 400);
+        }
+        const date = new Date(expensedAt);
+        await ExpenseLimit.findOrCreate(
+            {
+                where:{
+                    projectId: projectId,
+                    expenseCategoryId:category,
+                    month:date.getMonth()+1,
+                    year:date.getFullYear()
+                },
+                transaction: t
+            },
+        );
+        await t.commit();
+    } catch (error) {
+        console.log(error);
+        await t.rollback();
+        throw new AppError(error.message, 401)
+    }
+    const result = await Expense.findOne({
+        where:{
+            id:expenseId
+        },
+        include:[
+            {
+                model:Storage
+            },
+            {
+                model:ExpenseCategory
+            },
+            {
+                model:User,
+                attributes: { exclude: ['password'] },
+            }
+        ]
+    })
+    return res.status(201).json({
+        status:"success",
+        data:result
+    })
+});
+
+
+const updateExpenseCategory = catchAsync(async (req, res, next)=>{
+    const projectId = req.params.id;
+    const catId = req.params.catId;
+    const {name, limit} = req.body;
+    const t = await sequelize.transaction();
+    try {
+        const cat = await ExpenseCategory.update(
+            {
+                name:name,
+            },
+            {
+                where:{
+                    id:catId,
+                    projectId:projectId
+                }
+            },
+            { transaction: t },
+        );
+        if(!cat){
+            throw new AppError("Category not found", 400);
+        }
+        const date = new Date();
+        await ExpenseLimit.update(
+            {
+                limit:limit
+            },
+            {
+                where:{
+                    projectId: projectId,
+                    expenseCategoryId:catId,
+                    month:date.getMonth()+1,
+                    year:date.getFullYear()
+                },
+            },
+            {transaction: t}
+        );
+        await t.commit();
+    } catch (error) {
+        console.log(error);
+        await t.rollback();
+        throw new AppError(error.message, 401)
+    }
+    //TODO refactor with update;
+    const category = await ExpenseCategory.findOne({
+        where:{
+            id:catId
+        }
+    });
+    let result = category.toJSON();
+    const date = new Date();
+    const expLimit = await ExpenseLimit.findOne({
+        where:{
+            projectId: projectId,
+            expenseCategoryId:catId,
+            month:date.getMonth()+1,
+            year:date.getFullYear()
+        }
+    });
+    result.limit = expLimit;
+    return res.status(201).json({
+        status:"success",
+        data:result
+    })
+});
+
 module.exports = {
     addStorage, getAllStorages, updateStorage,
     getAllDeposits, addDeposit, deleteDeposit,updateDeposit,
-    addExpenseCategory, getMonthsExpenseCategories,
-    addExpense, getMonthExpenses,deleteExpense,
-    addTransfer, getAllTransfers, deleteTransfer,
+    addExpenseCategory, getMonthsExpenseCategories, updateExpenseCategory,
+    addExpense, getMonthExpenses,deleteExpense, updateExpense,
+    addTransfer, getAllTransfers, deleteTransfer,updateTransfer,
     balanceData
 }

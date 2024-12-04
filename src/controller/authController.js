@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken")
 const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const CurrencyService = require("../services/CurrencyService")
+const CurrencyService = require("../services/CurrencyService");
 
 const generateToken = (payload) => {
     return jwt.sign(payload, process.env.JWT_SECRET_KEY, {
@@ -92,7 +92,7 @@ const login = catchAsync(async (req, res, next) => {
             model: Project
         },
     });
-    const currencySettings  = await CurrencyService.getProjectCurrencySettings(currentProject.Project.currency);
+    const currencySettings = await CurrencyService.getProjectCurrencySettings(currentProject.Project.currency);
     return res.json({
         status: "success",
         data: {
@@ -131,6 +131,46 @@ const getCurrenUser = catchAsync(async (req, res, next) => {
     })
 });
 
+const changePassword = catchAsync(async (req, res, next)=>{
+    if(!req.body.password){
+        throw new AppError("Provide new password", 400, { password: "Provide new password" });
+    }
+    await User.update({
+        password: req.body.password,
+        confirmPassword: req.body.confirmPassword
+    }, 
+    {
+        where:{
+            id:req.user.id
+        }
+    });
+    return res.json({
+        status:"success"
+    })
+});
+
+
+const changeProfile = catchAsync(async (req, res, next)=>{
+    const [updated, user] = await User.update({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName
+    }, 
+    {
+        where:{
+            id:req.user.id
+        },
+        returning: true,
+    });
+    const result = user[0].toJSON();
+    delete result.deletedAt;
+    delete result.password;
+    return res.json({
+        status:"success",
+        data:result
+    })
+});
+
+
 const authentication = catchAsync(async (req, res, next) => {
     let idToken = "";
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -149,4 +189,6 @@ const authentication = catchAsync(async (req, res, next) => {
 });
 
 
-module.exports = { signup, login, getCurrenUser, authentication };
+module.exports = { signup, login, getCurrenUser, 
+    authentication, 
+    changePassword, changeProfile};

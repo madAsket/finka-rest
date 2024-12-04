@@ -72,10 +72,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       set(value){
         if(this.password.length < 5){
-          throw new AppError("Password must contains at least 5 characters", 400);
+          throw new AppError("Password must contains at least 5 characters", 400, 
+            {password:"Password must contains at least 5 characters"});
         }
         if(value !== this.password){
-          throw new AppError('Passwords are not the same', 400);
+          throw new AppError('Passwords are not the same', 400, 
+            {password:"Passwords are not the same"}
+          );
         }else{
             const hashPassword = bcrypt.hashSync(value, 10);
             this.setDataValue('password', hashPassword);

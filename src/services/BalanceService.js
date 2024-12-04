@@ -45,6 +45,7 @@ class BalanceService extends AbstractService {
             where: {
                 projectId: projectId
             },
+            order: [ [ 'createdAt', 'DESC' ]],
             include:[{
                 model:Expense,
                 required: false,
@@ -67,7 +68,7 @@ class BalanceService extends AbstractService {
         let totalSpent = 0.0;
         let totalLimit = 0.0;
         for await (let cat of categories){
-            const limit = await ExpenseLimit.findOrCreate({
+            let limit = await ExpenseLimit.findOne({
                 where:{
                     expenseCategoryId:cat.id,
                     projectId:projectId,
@@ -75,6 +76,27 @@ class BalanceService extends AbstractService {
                     year:date.getFullYear()
                 } 
             });
+            if(!limit){
+                const lastLimits = await ExpenseLimit.findAll({
+                    limit: 1,
+                    where:{
+                        expenseCategoryId:cat.id,
+                        projectId:projectId,
+                        year:{
+                            [Op.lte]:date.getFullYear()
+                        },
+                    },
+                    order: [ [ 'createdAt', 'DESC' ]],
+                });
+                console.log(lastLimits);
+                limit = await ExpenseLimit.create({
+                    expenseCategoryId:cat.id,
+                    projectId:projectId,
+                    month:date.getMonth()+1,
+                    year:date.getFullYear(),
+                    limit:lastLimits.length > 0 ? lastLimits[0].limit : 0
+                });
+            }
             const expenses = cat.Expenses;
             let spent = 0.0;
             expenses.forEach((item)=>{
@@ -90,10 +112,10 @@ class BalanceService extends AbstractService {
                 }
             });
             cat = cat.toJSON()
-            cat.limit = limit[0];
+            cat.limit = limit;
             cat.spent = spent;
             totalSpent += spent;
-            totalLimit += Number(limit[0].limit);
+            totalLimit += Number(limit.limit);
             result.push(cat);
         }
         return {categories:result, totalLimit, totalSpent, project, rates};

@@ -63,12 +63,14 @@ const addStorage = catchAsync(async (req,res,next)=>{
 });
 
 const getAllStorages = catchAsync(async (req,res, next)=>{
-    const noEmptyCondition = req.query.noempty ? {[Op.gt]: 0} : {[Op.gte]: 0}; //FIX problem with balance below zero;
+    let where = {
+        projectId: req.params.id,
+    }
+    if(req.query.noempty){
+        where.balance = {[Op.gt]: 0};
+    }
     const result = await Storage.findAll({
-        where: {
-            projectId: req.params.id,
-            balance:noEmptyCondition
-        },
+        where,
         order:[['updatedAt', "DESC"]]
     });
     return res.status(201).json({

@@ -55,7 +55,12 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Project',
-    paranoid:true
+    paranoid:true,
+    indexes: [
+      {
+        fields: ['owner'],
+      },
+    ]
   });
   return Project;
 };

@@ -56,7 +56,21 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ExpenseLimit',
-    paranoid:true
+    paranoid:true,
+    indexes: [
+      {
+        fields: ['projectId'],
+      },
+      {
+        fields: ['projectId','year','month'],
+      },
+      {
+        fields:['expenseCategoryId']
+      },
+      {
+        fields:['expenseCategoryId','projectId']
+      }
+    ]
   });
   return ExpenseLimit;
 };

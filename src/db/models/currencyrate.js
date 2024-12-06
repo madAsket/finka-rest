@@ -29,6 +29,11 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'CurrencyRate',
+    indexes: [
+      {
+        fields: ['rate','updatedAt'],
+      },
+    ]
   });
   return CurrencyRate;
 };

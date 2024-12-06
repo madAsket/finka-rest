@@ -57,7 +57,12 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Deposit',
-    paranoid:true
+    paranoid:true,
+    indexes: [
+      {
+        fields: ['projectId','userId','storageId'],
+      },
+    ]
   });
   return Deposit;
 };

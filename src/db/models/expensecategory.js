@@ -32,7 +32,12 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ExpenseCategory',
-    paranoid:true
+    paranoid:true,
+    indexes: [
+      {
+        fields: ['projectId'],
+      }
+    ]
   });
   return ExpenseCategory;
 };

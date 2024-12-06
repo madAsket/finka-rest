@@ -12,6 +12,7 @@ const API_URI = process.env.API_URI;
 const API_VERSION = process.env.API_VERSION
 const APP_PORT = process.env.NODE_LOCAL_PORT
 const runCronJobs = require("./cronjobs");
+const {sequelize} = require("./db/models")
 
 app.use(express.json());
 

@@ -71,7 +71,21 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Transfer',
-    paranoid:true
+    paranoid:true,
+    indexes: [
+      {
+        fields: ['fromStorageId', 'toStorageId'],
+      },
+      {
+        fields:['projectId']
+      },
+      {
+        fields:['transferrerId']
+      },
+      {
+        fields:['transferredAt']
+      }
+    ]
   });
   return Transfer;
 };

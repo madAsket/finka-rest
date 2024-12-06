@@ -65,6 +65,17 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Expense',
     paranoid:true,
+    indexes: [
+      {
+        fields: ['projectId'],
+      },
+      {
+        fields:['projectId','expenseCategoryId', 'expensedAt']
+      },
+      {
+        fields:['storageId']
+      }
+    ]
   });
   return Expense;
 };

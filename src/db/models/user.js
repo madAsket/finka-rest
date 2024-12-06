@@ -99,7 +99,13 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'User',
-    paranoid:true
+    paranoid:true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['email'],
+      },
+    ]
   });
 
   return User;

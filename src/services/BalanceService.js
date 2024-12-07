@@ -1,20 +1,14 @@
 const AbstractService = require("./AbstractService");
-const currencyConfig = require("../db/config/currencyConfig")
-const {sequelize, CurrencyRate, Expense, Storage, ExpenseCategory, Project, ExpenseLimit} = require("../db/models");
+const {sequelize, Storage, Project, ExpenseLimit} = require("../db/models");
 const { Op } = require("sequelize");
 const CurrencyService = require("./CurrencyService");
 
 class BalanceService extends AbstractService {
-
     constructor() {
         super();
-        if (BalanceService.serviceInstance) {
-            return BalanceService.serviceInstance;
-        }
-        BalanceService.serviceInstance = this;
     }
-    async getProjectBalance(projectId){
-        const {totalLimit, totalSpent, project, rates} = await this.getMonthExpenseCategories(projectId);
+    async getProjectBalance(projectId, categories){
+        const {totalLimit, totalSpent, project, rates} = await this.getMonthBalanceData(projectId, categories, new Date());
         let totalBalance = 0.0;
         const storages = await Storage.findAll({
             where:{
@@ -37,26 +31,7 @@ class BalanceService extends AbstractService {
         });
         return {totalLimit, totalSpent, totalBalance};
     }
-    async getMonthExpenseCategories(projectId){
-        const date = new Date();
-        const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
-        const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-        let categories = await ExpenseCategory.findAll({
-            where: {
-                projectId: projectId
-            },
-            order: [ [ 'createdAt', 'DESC' ]],
-            include:[{
-                model:Expense,
-                required: false,
-                include:[Storage],
-                where:{
-                    expensedAt: {
-                        [Op.between]: [startDate, endDate] 
-                    }
-                }
-            }]
-        });
+    async getMonthBalanceData(projectId, categories, date){
         const project = await Project.findOne({
             where:{
                 id:projectId
@@ -88,7 +63,6 @@ class BalanceService extends AbstractService {
                     },
                     order: [ [ 'createdAt', 'DESC' ]],
                 });
-                console.log(lastLimits);
                 limit = await ExpenseLimit.create({
                     expenseCategoryId:cat.id,
                     projectId:projectId,

@@ -3,13 +3,8 @@ const currencyConfig = require("../db/config/currencyConfig")
 const {sequelize, CurrencyRate,} = require("../db/models");
 
 class CurrencyService extends AbstractService {
-
     constructor() {
         super();
-        if (CurrencyService.serviceInstance) {
-            return CurrencyService.serviceInstance;
-        }
-        CurrencyService.serviceInstance = this;
     }
     getCurrencyList(){
         let currencyNames = {};

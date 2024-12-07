@@ -29,7 +29,6 @@ app.use(`${API_URI}${API_VERSION}/upload`, mediaRoute);
 
 // Image upload settings
 app.use(express.static("upload"));
-// app.use(express.static(`${__dirname}/upload`));
 
 // 404
 app.use("*", catchAsync(async (req, res, next)=>{

@@ -105,7 +105,15 @@ module.exports = (sequelize, DataTypes) => {
         unique: true,
         fields: ['email'],
       },
-    ]
+    ],
+    defaultScope: {
+      attributes: { exclude: ['password','deletedAt'] },
+    },
+    scopes: {
+      auth: {
+        attributes: { include: ['password'] },
+      }
+    }
   });
 
   return User;

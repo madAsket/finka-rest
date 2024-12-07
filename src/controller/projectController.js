@@ -1,103 +1,33 @@
-const {sequelize, Project, User, UserProjects} = require("../db/models");
-const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
-const CurrencyService = require("../services/CurrencyService");
+const ProjectService = require("../services/ProjectService");
 
 const createProject = catchAsync(async (req,res,next)=>{
-    const body = req.body;
-    const t = await sequelize.transaction();
-    let newUserProject;
-    let newProject;
-    try {
-        newProject = await Project.create(
-            {
-                name:body.name,
-                currency:body.currency,
-                owner:req.user.id
-            },
-            { transaction: t },
-        );
-        if(body.isCurrent){
-            //make other user's projects as not current;
-            await UserProjects.update(
-                {isCurrent:false},
-                {
-                    where:{
-                        userId:req.user.id,
-                    }
-                }, 
-                { transaction: t }
-            )
-        }
-        newUserProject = await UserProjects.create({
-            isCurrent:body.isCurrent,
-            projectId:newProject.id,
-            userId:req.user.id
-        }, { transaction: t });
-        await t.commit();
-    } catch (error) {
-        console.log(error);
-        await t.rollback();
-    }
-    newUserProject = newUserProject.toJSON();
-    newUserProject.Project = newProject.toJSON();
-    let currencySettings = null;
-    if(newUserProject.isCurrent){
-        currencySettings = await CurrencyService.getProjectCurrencySettings(newUserProject.Project.currency);
-    }
+    const {name, currency, isCurrent} = req.body;
+    const data = await ProjectService.createProject(name, currency, isCurrent, req.user);
     return res.status(201).json({
         status:"success",
-        data:{
-            newProject:newUserProject,
-            currency:currencySettings
-        }
+        data:data
     });
 });
 
 const getAllProjects = catchAsync(async (req, res, next)=>{
-    const result = await UserProjects.findAll({
-        where: {
-            userId: req.user.id
-        },
-        include: {
-            model: Project,
-            include:{
-                model: User,
-                as:"ownerUser",
-                attributes: { exclude: ['password'] },
-            }
-        },
-        order:[["updatedAt", "DESC"]]
-    });
+    const data = await ProjectService.getAllProjects(req.user);
     return res.status(201).json({
         status:"success",
-        data:result
+        data:data
     })
 });
 
 const getProjectById = catchAsync(async (req, res, next)=>{
-    const projectId = req.params.id;
-    const result = await Project.findOne({
-        where:{id:projectId, owner:req.user.id},
-        include:'User'});
-    if(!result){
-        throw new AppError("Project not found", 400);
-    }
+    const data = await ProjectService.getProjectById(req.user, req.params.id);
     return res.status(201).json({
         status:"success",
-        data:result
-    })
+        data:data
+    });
 });
 
 const updateProject = catchAsync(async (req, res, next)=>{
-    const projectId = req.params.id;
-    const result = await Project.findOne({
-        where:{id:projectId}});
-    if(!result){
-        throw new AppError("Project not found", 400);
-    }
-    result.name = req.body.name;
-    await result.save();
+    await ProjectService.updateProject(req.params.id, req.body.name);
     return res.status(201).json({
         status:"success"
     })
@@ -105,81 +35,22 @@ const updateProject = catchAsync(async (req, res, next)=>{
 
 
 const switchProject = catchAsync(async (req, res, next)=>{
-    const projectId = req.params.id;
-    let projectToSwitch;
-    const t = await sequelize.transaction();
-    try {
-        //make other user's projects as not current;
-        await UserProjects.update(
-            {isCurrent:false},
-            {
-                where:{
-                    userId:req.user.id
-                }
-            }, 
-            { transaction: t }
-        );
-        await UserProjects.update(
-            {
-                isCurrent:true
-            },
-            {
-                where:{
-                    projectId:projectId,
-                    userId:req.user.id
-                },
-            },
-            { transaction: t },
-        );
-        projectToSwitch = await UserProjects.findOne(
-            {
-                where:{
-                    projectId:projectId,
-                    userId:req.user.id
-                },
-                include:[Project]
-            },
-            { transaction: t },
-        );
-        await t.commit();
-    } catch (error) {
-        console.log(error);
-        await t.rollback();
-    }
-    const currencySettings = await CurrencyService.getProjectCurrencySettings(projectToSwitch.Project.currency);
+    const data = await ProjectService.switchProject(req.user, req.params.id);
     return res.status(201).json({
         status:"success",
-        data:{
-            project:projectToSwitch,
-            currency:currencySettings
-        }
+        data:data
     })
 });
 
 const deleteProject = catchAsync(async (req, res, next)=>{
-    const projectId = req.params.id;
-    const result = await Project.findOne({
-        where:{id:projectId,owner:req.user.id}});
-    if(!result){
-        throw new AppError("Project not found", 400);
-    }
-    await result.destroy();
+    await ProjectService.deleteProject(req.user, req.params.id);
     return res.status(201).json({
-        status:"success",
-        message:"Deleted successfully"
+        status:"success"
     })
 });
 
 const getProjectUsers = catchAsync(async (req,res, next)=>{
-    const projectId = req.params.id;
-    const project = await Project.findOne({
-        where:{id:projectId}
-    });
-    const users = await project.getUsers({
-        attributes:{
-            exclude:['password']
-        }
-    });
+    const users = await ProjectService.getProjectUsers(req.params.id);
     return res.status(201).json({
         status:"success",
         data:users
@@ -187,43 +58,11 @@ const getProjectUsers = catchAsync(async (req,res, next)=>{
 });
 
 const inviteUserToProject = catchAsync(async (req, res, next)=>{
-    const projectId = req.params.id;
     const {email} = req.body;
-    
-    const user = await User.findOne({
-        where:{
-            email:email
-        },
-        attributes: { exclude: ['password'] },
-    });
-    if(!user){
-        throw new AppError("User not found", 400, {
-            email:"User with this email not found"
-        });
-    }
-    if(user.id === req.user.id){
-        throw new AppError("Wrong user", 400, {
-            email:"You're already in the project"
-        });
-    };
-    const project = await UserProjects.findOne({
-        where:{
-            projectId: projectId,
-            userId:user.id
-        },
-    });
-    if(project){
-        throw new AppError("Wrong user", 400, {
-            email:"User's already in the project"
-        });
-    }
-    await UserProjects.create({
-        projectId: projectId,
-        userId:user.id
-    });
+    const data = await ProjectService.inviteUserToProject(req.user, req.params.id, email);
     return res.status(201).json({
         status:"success",
-        data:user
+        data:data
     })
 });
 

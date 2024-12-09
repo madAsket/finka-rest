@@ -1,5 +1,4 @@
 const AbstractService = require("./AbstractService");
-require('dotenv').config({ path: `${process.cwd()}/.env` });
 const jwt = require("jsonwebtoken")
 const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');

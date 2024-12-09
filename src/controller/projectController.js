@@ -59,7 +59,7 @@ const getProjectUsers = catchAsync(async (req,res, next)=>{
 
 const inviteUserToProject = catchAsync(async (req, res, next)=>{
     const {email} = req.body;
-    const data = await ProjectService.inviteUserToProject(req.user, req.params.id, email);
+    const data = await ProjectService.inviteUserToProject(req.user, req.params.id, email.toLowerCase());
     return res.status(201).json({
         status:"success",
         data:data

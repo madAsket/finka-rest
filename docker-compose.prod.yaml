@@ -2,7 +2,7 @@ services:
   postgresdb:
     image: postgres
     restart: unless-stopped
-    env_file: ./.env
+    env_file: ./.env.production
     environment:
       - POSTGRES_USER=$POSTGRESDB_USER
       - POSTGRES_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
@@ -12,9 +12,6 @@ services:
     volumes:
       - db:/var/lib/postgres
   finka-rest:
-    environment:
-      - POSTGRESDB_HOST=postgresdb
-      - POSTGRESDB_PORT=5432
     container_name: finka-rest
     ports:
       - "3000:3000"

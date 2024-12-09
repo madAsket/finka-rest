@@ -3,7 +3,7 @@ const UserService = require("../services/UserService");
 
 const signup = catchAsync(async (req, res, next) => {
     const {email, username, password, confirmPassword} = req.body;
-    const data = await UserService.signup(email, username, password, confirmPassword)
+    const data = await UserService.signup(email.toLowerCase(), username, password, confirmPassword)
     return res.status(201).json({
         status: 'success',
         data: data
@@ -12,7 +12,7 @@ const signup = catchAsync(async (req, res, next) => {
 
 const login = catchAsync(async (req, res, next) => {
     const { email, password } = req.body;
-    const data = await UserService.login(email, password);
+    const data = await UserService.login(email.toLowerCase(), password);
     return res.json({
         status: "success",
         data: data

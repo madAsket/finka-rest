@@ -3,12 +3,14 @@ const path =  require("path");
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { User } = require("../db/models");
+const fs = require('fs');
 
 const upload = multer({
     limits:1000,
     storage: multer.diskStorage({
         destination:(req,file,cb)=>{
-            cb(null, "upload/images")
+            fs.mkdirSync("upload/images", { recursive: true });
+            cb(null, "upload/images");
         },
         filename:(req,file,cb)=>{
             let ext = path.extname(file.originalname);

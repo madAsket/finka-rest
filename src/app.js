@@ -1,4 +1,5 @@
-require('dotenv').config({path: `${process.cwd()}/.env`});
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
+require('dotenv').config({path: `${process.cwd()}/${envFile}`});
 const express = require("express");
 const app = express();
 const cors = require('cors');
@@ -35,12 +36,9 @@ app.use("*", catchAsync(async (req, res, next)=>{
     throw new AppError("Route is not found", 404);
 }));
 
-
-
 app.use(globalErrorHandler);
 
-
-app.listen(APP_PORT, function(){
+app.listen(APP_PORT, '0.0.0.0', function(){
     console.log('Listening on port ', APP_PORT);
 });
 

@@ -1,65 +1,55 @@
-require('dotenv').config({path: `${process.cwd()}/.env`});
-const user = require("../db/models/user");
-const jwt  = require("jsonwebtoken")
-const bcrypt = require('bcrypt');
-const AppError = require('../utils/appError');
-const generateToken = (payload)=>{
-    return jwt.sign(payload, process.env.JWT_SECRET_KEY, {
-        expiresIn:process.env.JWT_EXPIRES_IN
+const catchAsync = require('../utils/catchAsync');
+const UserService = require("../services/UserService");
+
+const signup = catchAsync(async (req, res, next) => {
+    const {email, username, password, confirmPassword} = req.body;
+    const data = await UserService.signup(email.toLowerCase(), username, password, confirmPassword)
+    return res.status(201).json({
+        status: 'success',
+        data: data
     });
-}
+});
 
-const signup = async (req, res, next)=>{
-    const body = req.body;
-    const newUser = await user.create({
-        userType:'1',
-        firstName:body.firstName,
-        lastName:body.lastName,
-        email:body.email,
-        password:body.password,
-        confirmPassword:body.confirmPassword
+const login = catchAsync(async (req, res, next) => {
+    const { email, password } = req.body;
+    const data = await UserService.login(email.toLowerCase(), password);
+    return res.json({
+        status: "success",
+        data: data
     })
+});
 
-    if(!newUser){
-        throw new AppError("Failed to create the user", 400);
-    }else{
-        const result = newUser.toJSON();
-        delete result.deletedAt;
-        delete result.password;
-        result.token = generateToken({
-            id:result.id
-        })
-        return res.status(201).json({
-            status:'success',
-            data:result
-        });
-    }
-}
-
-const login = async (req, res, next)=>{
-    const {email, password} = req.body;
-    if(!email || !password){
-        throw new AppError("Please provide email and password", 400);
-    }
-
-    const result = await user.findOne({
-        where:{email}
+const getCurrenUser = catchAsync(async (req, res, next) => {
+    const data = await UserService.getCurrenUserData(req.user);
+    return res.json({
+        status: "success",
+        data: data
     })
-    if(!result || !(await bcrypt.compare(password, result.password))){
-        throw new AppError("Email or password is incorrect", 401);
-    }
-    jsonResult = result.toJSON();
-    jsonResult.token = generateToken({
-        id:result.id
-    });
-    delete jsonResult.deletedAt;
-    delete jsonResult.password;
-    
+});
+
+const changePassword = catchAsync(async (req, res, next)=>{
+    const { password, confirmPassword } = req.body;
+    await UserService.changePassword(req.user, password, confirmPassword);
+    return res.json({
+        status:"success"
+    })
+});
+
+
+const changeProfile = catchAsync(async (req, res, next)=>{
+    const {firstName, lastName} = req.body;
+    const user = await UserService.updateProfile(req.user, firstName, lastName);
     return res.json({
         status:"success",
-        data:jsonResult
+        data:user
     })
-}
+});
 
+const authentication = catchAsync(async (req, res, next) => {
+    await UserService.authentication(req);
+    return next();
+});
 
-module.exports = {signup, login};
+module.exports = { signup, login, getCurrenUser, 
+    authentication, 
+    changePassword, changeProfile};

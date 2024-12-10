@@ -1,0 +1,44 @@
+services:
+  front-builder:
+    build:
+      context: .
+      dockerfile: ./front-builder/Dockerfile
+    image: front-builder:latest
+  database:
+    image: postgres
+    container_name: finka-db
+    restart: unless-stopped
+    env_file: ./.env.production
+    environment:
+      - POSTGRES_USER=$POSTGRESDB_USER
+      - POSTGRES_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
+      - POSTGRES_DB=$POSTGRESDB_DATABASE
+    ports:
+      - $POSTGRESDB_LOCAL_PORT:$POSTGRESDB_DOCKER_PORT
+    volumes:
+      - db:/var/lib/postgres
+  backend:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.prod
+    container_name: finka-backend
+    env_file: ./.env.production
+    ports:
+      - "3000:3000"
+    command: sh -c "npx sequelize-cli db:migrate && npm start"
+    depends_on:
+      - database
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: finka-nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - front-builder
+
+volumes:
+  db:
+

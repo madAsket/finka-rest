@@ -11,17 +11,6 @@ services:
       - $POSTGRESDB_LOCAL_PORT:$POSTGRESDB_DOCKER_PORT
     volumes:
       - db:/var/lib/postgres
-  finka-rest:
-    environment:
-      - POSTGRESDB_HOST=postgresdb
-      - POSTGRESDB_PORT=5432
-    container_name: finka-rest
-    ports:
-      - "3000:3000"
-    build: .
-    command: sh -c "npx sequelize-cli db:migrate && npm start"
-    depends_on:
-      - postgresdb
 
 volumes: 
   db:

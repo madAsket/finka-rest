@@ -1,4 +1,4 @@
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.dev';
 require('dotenv').config({path: `${process.cwd()}/${envFile}`});
 const express = require("express");
 const app = express();
@@ -45,4 +45,6 @@ app.listen(APP_PORT, '0.0.0.0', function(){
 
 runCronJobs();
 
-// sequelize.sync();
+if(process.env.NODE_ENV === 'production'){
+  sequelize.sync();
+}

@@ -6,15 +6,15 @@ services:
     image: front-builder:latest
   database:
     image: postgres
-    container_name: finka-db
+    container_name: finka-database
     restart: unless-stopped
     env_file: ./.env.production
     environment:
-      - POSTGRES_USER=$POSTGRESDB_USER
-      - POSTGRES_PASSWORD=$POSTGRESDB_ROOT_PASSWORD
-      - POSTGRES_DB=$POSTGRESDB_DATABASE
+      - POSTGRES_USER=pguser
+      - POSTGRES_PASSWORD=675838568a0c8005ada57f297b641412
+      - POSTGRES_DB=finka_database
     ports:
-      - $POSTGRESDB_LOCAL_PORT:$POSTGRESDB_DOCKER_PORT
+      - 5433:5432
     volumes:
       - db:/var/lib/postgres
   backend:
@@ -22,6 +22,7 @@ services:
       context: .
       dockerfile: ./Dockerfile.prod
     container_name: finka-backend
+    restart: always
     env_file: ./.env.production
     ports:
       - "3000:3000"

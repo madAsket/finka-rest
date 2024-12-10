@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
 
   deploy:
@@ -13,9 +17,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run:  cd finka-rest/ &&
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ secrets.DO_SSH_KEY }}
+
+    - name: Build and Deploy the Docker image
+      run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DO_USER }}@${{ secrets.DO_HOST }} "
+            cd finka-rest/ &&
             git pull origin main &&
-            docker-compose -f docker-compose.prod.yml build --no-cache &&
-            docker-compose -f docker-compose.prod.yml up -d
+            docker-compose -f docker-compose.prod.yaml build --no-cache &&
+            docker-compose -f docker-compose.prod.yaml up -d
+          "

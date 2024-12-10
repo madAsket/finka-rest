@@ -2,7 +2,7 @@ const cron = require('node-cron');
 const { CurrencyRate } = require('./db/models');
 const { Op } = require("sequelize");
 const { Client } = require('@coingate/coingate-sdk');
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.dev';
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
 require('dotenv').config({path: `${process.cwd()}/${envFile}`});
 
 

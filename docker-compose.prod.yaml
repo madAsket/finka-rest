@@ -52,11 +52,11 @@ services:
       - "443:443"
     depends_on:
       - backend
-      # - front-builder
+      - front-builder
     volumes:
       - ./nginx/certs:/etc/nginx/ssl # Монтируем сертификаты
       - ./nginx/conf.d:/etc/nginx/conf.d # Убедитесь, что конфигурация nginx подгружается
-      - /home/finka-front/dist:/usr/share/nginx/html:ro
+      # - /home/finka-front/dist:/usr/share/nginx/html:ro
 
 volumes:
   db:

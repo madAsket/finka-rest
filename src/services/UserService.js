@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');
 const CurrencyService = require("./CurrencyService");
 const {User, UserProjects, Project} = require("../db/models");
-const { Op } = require("sequelize");
+const { default: axios } = require("axios");
 
 class UserService extends AbstractService {
     constructor() {
@@ -36,17 +36,41 @@ class UserService extends AbstractService {
             },
         });
     }
-    async signup(email, username, password, confirmPassword){
-        const exist = await User.findOne({
+    async getUserByEmail(email){
+        return await User.findOne({
             where:{
                 email:email
             }
         });
+    }
+    async signup(email, username, password, confirmPassword){
+        const exist = await this.getUserByEmail(email);
         if(exist){
-            throw new AppError("User already exists", 400, {
+            throw new AppError("User already exists. Please, sign in.", 400, {
                 email:"This email already taken."
             });
         }
+        return await this.createUser(email, username, password, confirmPassword);
+    }
+    async login(email, password){
+        if (!email || !password) {
+            throw new AppError("Auth error", 401, {
+                email: "Please, provide email",
+                password: "Please, provide password"
+            });
+        }
+        return await this.authUser(email, password)
+    }
+    async authUser(email, password){
+        const result = await User.scope('auth').findOne({
+            where: { email }
+        })
+        if (!result || (password && !(await bcrypt.compare(password, result.password)))) {
+            throw new AppError("User with provided data not found", 401, { email: "Email or password are incorrect" });
+        }
+        return await this.buildUserData(result);
+    }
+    async createUser(email, username, password, confirmPassword){
         const newUser = await User.create({
             userType: '1',
             firstName: username,
@@ -55,13 +79,16 @@ class UserService extends AbstractService {
             confirmPassword: confirmPassword
         })
         if (!newUser)
-            throw new AppError("Failed to create the user", 400);
+            throw new AppError("Failed to create user", 400);
     
         await this.createDefaultUserProject(newUser);
-        const result = newUser.toJSON();
+        return await buildUserData(newUser);
+    }
+    async buildUserData(user){
+        const result = user.toJSON();
         delete result.deletedAt;
         delete result.password;
-        const {currentProject, currency} = await this.getCurrenUserData(newUser);
+        const {currentProject, currency} = await this.getCurrenUserData(user);
         return {
             user: result,
             token: UserService.generateToken({
@@ -71,31 +98,42 @@ class UserService extends AbstractService {
             currency:currency
         }
     }
-    async login(email, password){
-        if (!email || !password) {
-            throw new AppError("Auth error", 400, {
-                email: "Please, provide email",
-                password: "Please, provide password"
+    async googleAuth(token){
+        if (!token) {
+            throw new AppError("Google authentication error", 401);
+        }
+        let userDetails = null;
+        try{
+            const response = await axios.post(
+            'https://oauth2.googleapis.com/token',
+            {
+                code:token,
+                client_id: process.env.GOOGLE_CLIEND_ID,
+                client_secret: process.env.GOOGLE_CLIENT_SECRET,
+                redirect_uri: 'postmessage',
+                grant_type: 'authorization_code'
+            }
+            );
+            const accessToken = response.data.access_token;
+            const userResponse = await axios.get(
+            'https://www.googleapis.com/oauth2/v3/userinfo',
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
             });
+            userDetails = userResponse.data;
+        }catch(e){
+            throw AppError(e, 401);
         }
-        const result = await User.scope('auth').findOne({
-            where: { email }
-        })
-        if (!result || !(await bcrypt.compare(password, result.password))) {
-            throw new AppError("Auth error", 401, { email: "Email or password are incorrect" });
+        const exist = await this.getUserByEmail(userDetails.email);
+        if(exist){
+            return await this.authUser(userDetails.email);
+        }else{
+            const password = crypto.randomUUID();
+            return await this.createUser(userDetails.email, userDetails.name, password, password);
         }
-        let jsonResult = result.toJSON();
-        delete jsonResult.deletedAt;
-        delete jsonResult.password;
-        const {currentProject, currency} = await this.getCurrenUserData(result);
-        return {
-            user: jsonResult,
-            token: UserService.generateToken({
-                id: result.id
-            }),
-            currentProject:currentProject,
-            currency:currency
-        }
+        
     }
     async getCurrenUserData(user){
         const currentProject = await this.getCurrentUserProject(user);

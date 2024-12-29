@@ -19,6 +19,15 @@ const login = catchAsync(async (req, res, next) => {
     })
 });
 
+const googleAuth = catchAsync(async (req, res, next) => {
+    const { token } = req.body;
+    const data = await UserService.googleAuth(token);
+    return res.json({
+        status: "success",
+        data: data
+    });
+});
+
 const getCurrenUser = catchAsync(async (req, res, next) => {
     const data = await UserService.getCurrenUserData(req.user);
     return res.json({
@@ -50,6 +59,6 @@ const authentication = catchAsync(async (req, res, next) => {
     return next();
 });
 
-module.exports = { signup, login, getCurrenUser, 
+module.exports = { signup, login, getCurrenUser, googleAuth,
     authentication, 
     changePassword, changeProfile};

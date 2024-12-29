@@ -2,7 +2,7 @@ const router = require("express").Router();
 const { addStorage, getAllStorages, updateStorage,
     addDeposit, getAllDeposits, 
     addExpenseCategory, getMonthsExpenseCategories,
-    addExpense, getMonthExpenses,
+    addExpense, getExpenses,
     addTransfer, getAllTransfers, 
     balanceData,
     deleteExpense,
@@ -11,10 +11,12 @@ const { addStorage, getAllStorages, updateStorage,
     updateExpense,
     updateExpenseCategory,
     } = require("../controller/balanceController");
-const { createProject, getAllProjects, getProjectById, updateProject, deleteProject, getProjectUsers, 
+const { createProject, getAllProjects, getProjectById, 
+    updateProject, deleteProject, getProjectUsers, 
     switchProject, 
     inviteUserToProject} = require("../controller/projectController");
 const { authentication } = require("../controller/authController");
+const { expensesAnalytic } = require("../controller/analyticController");
 
 //projects controllers
 router.route("/").post(authentication, createProject)
@@ -50,10 +52,13 @@ router.route("/:id/transfers/:transferId").delete(authentication, deleteTransfer
 
 //project expense controllers
 router.route("/:id/expenses/").post(authentication, addExpense)
-                                .get(authentication, getMonthExpenses)
+                                .get(authentication, getExpenses)
 router.route("/:id/expenses/:expenseId").delete(authentication, deleteExpense)
                                         .patch(authentication, updateExpense)
 
 router.route("/:id/balance/").get(authentication, balanceData);
+
+//project analytic
+router.route("/:id/analytic/expenses/").get(authentication, expensesAnalytic);
 
 module.exports = router;

@@ -1,25 +1,30 @@
 const AbstractService = require("./AbstractService");
-const {sequelize, Expense, Storage, ExpenseCategory, User, ExpenseLimit} = require("../db/models");
+const {sequelize, Expense, Storage, ExpenseCategory, User, Project, ExpenseLimit} = require("../db/models");
 const { Op } = require("sequelize");
 const AppError = require("../utils/appError");
+const CurrencyService = require("./CurrencyService");
 
 class ExpenseService extends AbstractService {
     constructor() {
         super();
     }
-    async getExpensesInCategories(projectId){
-        const date = new Date();
-        const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
-        const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-        return await ExpenseCategory.findAll({
+    async getExpensesInCategories(projectId, startDate, endDate){
+        if(!startDate && !endDate){
+            const date = new Date();
+            startDate = new Date(date.getFullYear(), date.getMonth(), 1);
+            endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        }
+        const cats =  await ExpenseCategory.findAll({
             where: {
                 projectId: projectId
             },
             order: [ [ 'createdAt', 'DESC' ]],
             include:[{
                 model:Expense,
+                attributes:[
+                    'projectCurrencyAmount'
+                ],
                 required: false,
-                include:[Storage],
                 where:{
                     expensedAt: {
                         [Op.between]: [startDate, endDate] 
@@ -27,6 +32,7 @@ class ExpenseService extends AbstractService {
                 }
             }]
         });
+        return cats;
     }
     async addExpenseCategory(projectId, name, limit){
         const t = await sequelize.transaction();
@@ -81,11 +87,24 @@ class ExpenseService extends AbstractService {
         const t = await sequelize.transaction();
         let expense;
         try {
+            const project = await Project.findOne({
+                where:{
+                    id:projectId
+                }
+            });
+            let projectAmount = amount;
+            if(project.currency !== selectedStorage.currency){
+                const rate = await CurrencyService.getCurrencyForPair(selectedStorage.currency, project.currency);
+                if(rate){
+                    projectAmount = (Number(amount) * rate.rate);
+                }
+            }
             expense = await Expense.create(
                 {
                     projectId: projectId,
                     description:description,
                     amount:amount,
+                    projectCurrencyAmount:projectAmount,
                     spenderId:spender,
                     expenseCategoryId:category,
                     storageId:storage,
@@ -131,18 +150,15 @@ class ExpenseService extends AbstractService {
             ]
         })
     }
-    async getCurrentMonthExpenses(projectId){
-        const date = new Date();//TODO get from query
-        const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
-        const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-        return await this.getMonthExpenses(projectId, startDate, endDate);
-    }
-    async getMonthExpenses(projectId, startDate, endDate){
+    async getExpenses(projectId, startDate, endDate){
         return await Expense.findAll({
             where:{
                 projectId: projectId,
                 expensedAt: {
-                    [Op.between]: [startDate, endDate],     
+                    [Op.and]:{
+                        [Op.gte]:startDate,
+                        [Op.lte]:endDate
+                    }
                 }
             },
             include:[

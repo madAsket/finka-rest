@@ -13,18 +13,29 @@ class CurrencyService extends AbstractService {
         }
         return currencyNames;
     }
+    wrapRates(rates){
+        const rateList = {};
+        rates.forEach((item)=>{
+            rateList[item.fromCurrency] = item.rate;
+        });
+        return rateList;
+    }
+    async getCurrencyForPair(fromCurrency, toCurrency){
+        return await CurrencyRate.findOne({
+            where:{
+                fromCurrency:fromCurrency,
+                toCurrency:toCurrency
+            }
+        });
+    }
     async getProjectCurrencySettings(baseCurrency){
         const rates = await CurrencyRate.findAll({
             where:{
                 toCurrency:baseCurrency
             }
         });
-        const rateList = {}
-        rates.forEach((item)=>{
-            rateList[item.fromCurrency] = item.rate;
-        });
         return {
-            rates:rateList,
+            rates:this.wrapRates(rates),
             currency:currencyConfig
         };
     }

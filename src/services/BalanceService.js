@@ -1,6 +1,6 @@
 const AbstractService = require("./AbstractService");
 const {sequelize, Storage, Project, ExpenseLimit} = require("../db/models");
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 const CurrencyService = require("./CurrencyService");
 
 class BalanceService extends AbstractService {
@@ -20,7 +20,6 @@ class BalanceService extends AbstractService {
         });
         storages.forEach((storage)=>{
             if(project.currency === storage.currency){
-      
                 totalBalance += Number(storage.balance)
             }else{
                 const rate = rates[storage.currency];
@@ -42,6 +41,7 @@ class BalanceService extends AbstractService {
         let result = [];
         let totalSpent = 0.0;
         let totalLimit = 0.0;
+        let expenseList = [];
         for await (let cat of categories){
             let limit = await ExpenseLimit.findOne({
                 where:{
@@ -74,25 +74,18 @@ class BalanceService extends AbstractService {
             const expenses = cat.Expenses;
             let spent = 0.0;
             expenses.forEach((item)=>{
-                const amount = Number(item.amount);
-                const expenseCurrency = item.Storage.currency;
-                if(expenseCurrency === baseCurrency){
-                    spent += amount;
-                }else{
-                    const rate = rates[expenseCurrency];
-                    if(rate){
-                        spent += (amount * rate);
-                    }
-                }
+                const amount = Number(item.projectCurrencyAmount);
+                expenseList.push(amount);
+                spent += (amount);
             });
-            cat = cat.toJSON()
+            cat = cat.toJSON();
             cat.limit = limit;
             cat.spent = spent;
             totalSpent += spent;
             totalLimit += Number(limit.limit);
             result.push(cat);
         }
-        return {categories:result, totalLimit, totalSpent, project, rates};
+        return {categories:result, expenses:expenseList, totalLimit, totalSpent, project, rates};
     }
 }
 

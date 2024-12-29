@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      this.belongsTo(models.Project, {foreignKey:"projectId"});
       this.belongsTo(models.Storage, {foreignKey:"storageId"});
       this.belongsTo(models.User, {foreignKey:"spenderId"});
       this.belongsTo(models.ExpenseCategory, {foreignKey:"expenseCategoryId"});
@@ -18,6 +19,11 @@ module.exports = (sequelize, DataTypes) => {
   }
   Expense.init({
     amount: {
+      type: DataTypes.DECIMAL(20, 10),
+      allowNull:false,
+      defaultValue:0.0000000000
+    },
+    projectCurrencyAmount: {
       type: DataTypes.DECIMAL(20, 10),
       allowNull:false,
       defaultValue:0.0000000000

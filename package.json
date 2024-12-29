@@ -12,6 +12,9 @@
   "license": "ISC",
   "dependencies": {
     "@coingate/coingate-sdk": "^1.1.2",
+    "@sentry/node": "^8.47.0",
+    "@sentry/profiling-node": "^8.47.0",
+    "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

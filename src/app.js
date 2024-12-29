@@ -1,5 +1,9 @@
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
 require('dotenv').config({path: `${process.cwd()}/${envFile}`});
+if(process.env.NODE_ENV === 'production'){
+  require("./sentrytool.js");
+}
+const Sentry = require("@sentry/node");
 const express = require("express");
 const app = express();
 const cors = require('cors');
@@ -13,12 +17,11 @@ const API_URI = process.env.API_URI;
 const API_VERSION = process.env.API_VERSION
 const APP_PORT = process.env.NODE_LOCAL_PORT
 const runCronJobs = require("./cronjobs");
-const {sequelize} = require("./db/models")
+const {sequelize} = require("./db/models");
 
 app.use(express.json());
-
 app.use(cors({
-  origin: process.env.FRONT_URL,
+  origin: process.env.ALLOWED_ORIGINS.split(','),
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
 
@@ -35,6 +38,9 @@ app.use(express.static("upload"));
 app.use("*", catchAsync(async (req, res, next)=>{
     throw new AppError("Route is not found", 404);
 }));
+if(process.env.NODE_ENV === 'production'){
+  Sentry.setupExpressErrorHandler(app);
+}
 
 app.use(globalErrorHandler);
 

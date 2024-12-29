@@ -72,9 +72,10 @@ const addExpense = catchAsync(async (req, res, next)=>{
     });
 });
 
-const getMonthExpenses = catchAsync(async (req,res,next)=>{
+const getExpenses = catchAsync(async (req,res,next)=>{
     const projectId = req.params.id;
-    const result = await ExpenseService.getCurrentMonthExpenses(projectId);
+    const {startDate, endDate} = req.query;
+    const result = await ExpenseService.getExpenses(projectId, startDate, endDate);
     return res.status(201).json({
         status:"success",
         data:result
@@ -193,7 +194,7 @@ module.exports = {
     addStorage, getAllStorages, updateStorage,
     getAllDeposits, addDeposit, deleteDeposit,updateDeposit,
     addExpenseCategory, getMonthsExpenseCategories, updateExpenseCategory,
-    addExpense, getMonthExpenses,deleteExpense, updateExpense,
+    addExpense, getExpenses,deleteExpense, updateExpense,
     addTransfer, getAllTransfers, deleteTransfer,updateTransfer,
     balanceData
 }

@@ -36,9 +36,13 @@ services:
     container_name: finka-nginx
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - backend
       - front-builder
+    volumes:
+      - ./nginx/certs:/etc/nginx/ssl # Монтируем сертификаты
+      - ./nginx/conf.d:/etc/nginx/conf.d # Убедитесь, что конфигурация nginx подгружается
 
 volumes:
   db:

@@ -1,8 +1,8 @@
 services:
   front-builder:
     build:
-      context: .
-      dockerfile: ./front-builder/Dockerfile
+      context: ./front-builder
+      dockerfile: Dockerfile
     image: front-builder:latest
   database:
     image: postgres

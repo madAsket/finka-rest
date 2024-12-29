@@ -11,7 +11,7 @@ services:
     container_name: finka-front-builder
     working_dir: /app
     volumes:
-      - /home/finka-front:/app 
+      - /home/finka-front:/app
     command: >
       bash -c "
         npm install &&
@@ -55,7 +55,7 @@ services:
       - front-builder
     volumes:
       - ./nginx/certs:/etc/nginx/ssl # Монтируем сертификаты
-      - /home/finka-front/dist:/usr/share/nginx/html:ro
+      # - /home/finka-front/dist:/usr/share/nginx/html:ro
 
 volumes:
   db:

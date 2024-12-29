@@ -1,8 +1,8 @@
 services:
   front-builder:
     build:
-      context: ./front-builder
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./front-builder/Dockerfile
     image: front-builder:latest
     volumes:
       - /root/finka-front:/app/front-source

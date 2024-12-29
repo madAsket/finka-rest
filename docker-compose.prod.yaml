@@ -6,17 +6,16 @@ services:
   #   image: front-builder:latest
   #   volumes:
   #     - /home/finka-front:/home/front-source
-  front-builder:
-    image: node:20.12.1
-    container_name: finka-front-builder
-    working_dir: /build
-    volumes:
-      - /home/finka-front:/build
-    command: >
-      bash -c "
-        npm install &&
-        npm run build
-      "
+  # front-builder:
+  #   container_name: finka-front-builder
+  #   # working_dir: /build
+  #   volumes:
+  #     - /home/finka-front:/build
+  #   # command: >
+  #   #   bash -c "
+  #   #     npm install &&
+  #   #     npm run build
+  #   #   "
   database:
     image: postgres
     container_name: finka-database
@@ -52,11 +51,9 @@ services:
       - "443:443"
     depends_on:
       - backend
-      - front-builder
     volumes:
       - ./nginx/certs:/etc/nginx/ssl # Монтируем сертификаты
-      # - /home/finka-front/dist:/usr/share/nginx/html:ro
-
+      - /home/finka-front:/build
 volumes:
   db:
 

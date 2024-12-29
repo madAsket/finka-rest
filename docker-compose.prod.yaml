@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: ./front-builder/Dockerfile
     image: front-builder:latest
+    volumes:
+      - ~/.ssh:/root/.ssh:ro 
   database:
     image: postgres
     container_name: finka-database

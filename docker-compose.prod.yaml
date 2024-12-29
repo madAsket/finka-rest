@@ -44,7 +44,7 @@ services:
       - "443:443"
     depends_on:
       - backend
-      - front
+      # - front
     volumes:
       - ./nginx/certs:/etc/nginx/ssl # Монтируем сертификаты
 volumes:

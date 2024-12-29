@@ -1,4 +1,4 @@
-FROM front-builder:latest as builder
+FROM front:latest as builder
 
 FROM nginx:stable-alpine
 

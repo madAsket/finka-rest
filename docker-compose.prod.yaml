@@ -55,8 +55,6 @@ services:
       - front-builder
     volumes:
       - ./nginx/certs:/etc/nginx/ssl # Монтируем сертификаты
-      - ./nginx/conf.d:/etc/nginx/conf.d # Убедитесь, что конфигурация nginx подгружается
-      # - /home/finka-front/dist:/usr/share/nginx/html:ro
 
 volumes:
   db:

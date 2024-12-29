@@ -1,5 +1,6 @@
 FROM node:20.12.1 as builder
-WORKDIR /build
+WORKDIR /app
+COPY /build .
 RUN npm install
 RUN npm run build
 

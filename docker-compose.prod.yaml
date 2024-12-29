@@ -1,5 +1,5 @@
 services:
-  front-builder:
+  front:
     container_name: finka-front-builder
     working_dir: /build
     volumes:
@@ -44,7 +44,7 @@ services:
       - "443:443"
     depends_on:
       - backend
-      - front-builder
+      - front
     volumes:
       - ./nginx/certs:/etc/nginx/ssl # Монтируем сертификаты
 volumes:

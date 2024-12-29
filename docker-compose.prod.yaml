@@ -9,9 +9,9 @@ services:
   front-builder:
     image: node:20.12.1
     container_name: finka-front-builder
-    working_dir: /app
+    working_dir: /build
     volumes:
-      - /home/finka-front:/app
+      - /home/finka-front:/build
     command: >
       bash -c "
         npm install &&

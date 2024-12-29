@@ -5,7 +5,7 @@ services:
       dockerfile: ./front-builder/Dockerfile
     image: front-builder:latest
     volumes:
-      - /home/finka-front:/app/front-source
+      - /home/finka-front:/home/front-source
   database:
     image: postgres
     container_name: finka-database

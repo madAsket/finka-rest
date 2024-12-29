@@ -4,6 +4,8 @@ services:
       context: ./front-builder
       dockerfile: Dockerfile
     image: front-builder:latest
+    volumes:
+      - /root/finka-front:/app/front-source
   database:
     image: postgres
     container_name: finka-database

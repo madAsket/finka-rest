@@ -24,7 +24,9 @@ jobs:
     - name: Build and Deploy the Docker image
       run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DO_USER }}@${{ secrets.DO_HOST }} "
-            cd finka-rest &&
+            cd finka-front &&
+            git pull origin main &&
+            cd ../finka-rest &&
             git pull origin main &&
             docker compose -f docker-compose.prod.yaml build --no-cache &&
             docker compose -f docker-compose.prod.yaml up -d

@@ -28,7 +28,6 @@ jobs:
             git pull origin main &&
             cd /root/finka-rest &&
             git pull origin main &&
-            docker compose -f docker-compose.prod.yaml run --rm front-builder &&
             docker compose -f docker-compose.prod.yaml build --no-cache &&
             docker compose -f docker-compose.prod.yaml up -d
           "

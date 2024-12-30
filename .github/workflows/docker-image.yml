@@ -26,7 +26,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.DO_USER }}@${{ secrets.DO_HOST }} "
             cd /root/finka-front &&
             git pull origin main &&
-            docker compose -f docker-compose.prod.yaml build --no-cache &&
+            cp -r /root/finka-front/dist /root/finka-rest/front-builder/dist &&
             cd /root/finka-rest &&
             git pull origin main &&
             docker compose -f docker-compose.prod.yaml build --no-cache &&

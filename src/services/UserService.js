@@ -124,7 +124,7 @@ class UserService extends AbstractService {
             });
             userDetails = userResponse.data;
         }catch(e){
-            throw AppError(e, 401);
+            throw new AppError(e, 401);
         }
         const exist = await this.getUserByEmail(userDetails.email);
         if(exist){

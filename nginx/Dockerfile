@@ -1,9 +1,4 @@
-FROM node:20.12.1 as builder
-WORKDIR /app
-COPY /home/finka-front .
-WORKDIR /app/finka-front
-RUN npm install
-RUN npm run build
+FROM finka-front:latest as builder
 
 FROM nginx:stable-alpine
 COPY ./nginx/nginx.conf /etc/nginx/conf.d/finka.conf

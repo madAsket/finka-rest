@@ -47,7 +47,6 @@ services:
       - backend
     volumes:
       - ./nginx/certs:/etc/nginx/ssl # Монтируем сертификаты
-      - /root/finka-front:/home/finka-front:ro # Монтируем сертификаты
 volumes:
   db:
 

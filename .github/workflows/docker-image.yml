@@ -24,7 +24,7 @@ jobs:
     - name: Build and Deploy the Docker image
       run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.DO_USER }}@${{ secrets.DO_HOST }} "
-            cd /home/finka-front &&
+            cd /root/finka-front &&
             git pull origin main &&
             cd /root/finka-rest &&
             git pull origin main &&

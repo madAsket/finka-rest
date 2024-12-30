@@ -1,6 +1,6 @@
 FROM node:20.12.1 as builder
 WORKDIR /app
-COPY ../finka-front .
+COPY ../../finka-front .
 WORKDIR /app/finka-front
 RUN npm install
 RUN npm run build

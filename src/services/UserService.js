@@ -3,17 +3,25 @@ const jwt = require("jsonwebtoken")
 const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');
 const CurrencyService = require("./CurrencyService");
-const {User, UserProjects, Project} = require("../db/models");
+const {User, UserProjects, Project, Subscription} = require("../db/models");
 const { default: axios } = require("axios");
+const {defaultSender: mailSender} = require("../modules/email/MailSender")
 
 class UserService extends AbstractService {
     constructor() {
         super();
     }
-    static generateToken(payload){
+    static generateToken(payload, expiresIn=process.env.JWT_EXPIRES_IN){
         return jwt.sign(payload, process.env.JWT_SECRET_KEY, {
-            expiresIn: process.env.JWT_EXPIRES_IN
+            expiresIn: expiresIn
         });
+    }
+    static validateToken(tokenId){
+        const tokenDetail = jwt.verify(tokenId, process.env.JWT_SECRET_KEY);
+        if(!tokenDetail){
+            throw new AppError("Token is expired or invalid", 400);
+        }
+        return tokenDetail;
     }
      //TODO move to Project Service?
     async createDefaultUserProject(user, projectName="Family budgeting"){
@@ -23,6 +31,13 @@ class UserService extends AbstractService {
         });
         await user.addProject(defaultProject, { through: { isCurrent: true } });
         return defaultProject;
+    }
+    async createDefaultUserSubscription(user){
+        const defaultSubscription = await Subscription.create({
+            status:"early_adopters",
+            userId: user.id,
+        });
+        return defaultSubscription;
     }
     //TODO move to Project Service?
     async getCurrentUserProject(user){
@@ -82,7 +97,8 @@ class UserService extends AbstractService {
             throw new AppError("Failed to create user", 400);
     
         await this.createDefaultUserProject(newUser);
-        return await buildUserData(newUser);
+        await this.createDefaultUserSubscription(newUser);
+        return await this.buildUserData(newUser);
     }
     async buildUserData(user){
         const result = user.toJSON();
@@ -176,6 +192,33 @@ class UserService extends AbstractService {
         delete result.password;
         return result;
     }    
+    async generateResetPasswordToken(email){
+        const user = await User.findOne({
+            where: {
+                email: email
+            }
+        });
+        if(user){
+            const token = UserService.generateToken({email}, process.env.JWT_RESET_PASSWORD_EXPIRES_IN);
+            mailSender.sendResetPasswordEmail(email, token);
+        }
+    }
+    checkResetPasswordToken(token){
+        return UserService.validateToken(token);
+    }
+    async resetPassword(token, password, confirmPassword){
+        const tokenDetail = UserService.validateToken(token);
+        await User.update({
+            password: password,
+            confirmPassword: confirmPassword
+        }, 
+        {
+            where:{
+                email:tokenDetail.email
+            }
+        });
+        return true;
+    }
     async authentication(req){
         let idToken = "";
         if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -184,7 +227,7 @@ class UserService extends AbstractService {
         if (!idToken) {
             throw new AppError("Please login to get access", 401);
         }
-        const tokenDetail = jwt.verify(idToken, process.env.JWT_SECRET_KEY)
+        const tokenDetail = UserService.validateToken(idToken);
         const freshUser = await User.findByPk(tokenDetail.id);
         if (!freshUser) {
             throw new AppError("User not found or no longer exists", 400);

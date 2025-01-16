@@ -1,15 +1,4 @@
 services:
-  # front:
-  #   image: node:20.12.1
-  #   container_name: finka-front-builder
-  #   working_dir: /build
-  #   volumes:
-  #     - /home/finka-front:/build
-  #   command: >
-  #     bash -c "
-  #       npm install &&
-  #       npm run build
-  #     "
   database:
     image: postgres
     container_name: finka-database
@@ -33,6 +22,8 @@ services:
     ports:
       - "3000:3000"
     command: sh -c "npx sequelize-cli db:migrate && npm start"
+    volumes:
+      - /home/upload:/app/upload/images
     depends_on:
       - database
   nginx:

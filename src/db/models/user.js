@@ -50,9 +50,9 @@ module.exports = (sequelize, DataTypes) => {
         notEmpty:{
           msg:"Email cannot be empty"
         },
-        isEmail:{
+        isEmail:({
           msg:"Invalid email"
-        }
+        })
       }
     },
     password: {

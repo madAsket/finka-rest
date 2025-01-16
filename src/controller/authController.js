@@ -1,5 +1,6 @@
 const catchAsync = require('../utils/catchAsync');
 const UserService = require("../services/UserService");
+const AppError = require('../utils/appError');
 
 const signup = catchAsync(async (req, res, next) => {
     const {email, username, password, confirmPassword} = req.body;
@@ -54,6 +55,32 @@ const changeProfile = catchAsync(async (req, res, next)=>{
     })
 });
 
+const generateResetPasswordToken = catchAsync(async (req, res, next)=>{
+    await UserService.generateResetPasswordToken(req.body.email);
+    return res.json({
+        status:"success"
+    })
+});
+
+const checkResetPasswordToken = catchAsync(async (req, res, next)=>{
+    UserService.checkResetPasswordToken(req.params.token);
+    return res.json({
+        status:"success",
+        data:{
+            isValid:true
+        }
+    })
+});
+
+const resetPassword = catchAsync(async (req, res, next)=>{
+    const {password, confirmPassword} = req.body;
+    await UserService.resetPassword(req.params.token, password, confirmPassword);
+    return res.json({
+        status:"success",
+    })
+});
+
+
 const authentication = catchAsync(async (req, res, next) => {
     await UserService.authentication(req);
     return next();
@@ -61,4 +88,8 @@ const authentication = catchAsync(async (req, res, next) => {
 
 module.exports = { signup, login, getCurrenUser, googleAuth,
     authentication, 
-    changePassword, changeProfile};
+    changePassword, changeProfile,
+    checkResetPasswordToken,
+    generateResetPasswordToken,
+    resetPassword
+};

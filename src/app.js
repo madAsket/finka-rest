@@ -10,6 +10,7 @@ const cors = require('cors');
 const authRoute = require("./route/authRoute");
 const projectRoute = require("./route/projectRoute");
 const mediaRoute = require("./route/mediaRoute");
+const subscriptionRoute = require("./route/subscriptionRoute");
 const catchAsync = require('./utils/catchAsync');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controller/errorController');
@@ -30,6 +31,7 @@ app.use(cors({
 app.use(`${API_URI}${API_VERSION}/auth`, authRoute);
 app.use(`${API_URI}${API_VERSION}/projects`, projectRoute);
 app.use(`${API_URI}${API_VERSION}/upload`, mediaRoute);
+app.use(`${API_URI}${API_VERSION}/subscription`, subscriptionRoute);
 
 // Image upload settings
 app.use(express.static("upload"));

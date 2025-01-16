@@ -6,7 +6,7 @@ const { User } = require("../db/models");
 const fs = require('fs');
 
 const upload = multer({
-    limits:1000,
+    limits:320,
     storage: multer.diskStorage({
         destination:(req,file,cb)=>{
             fs.mkdirSync("upload/images", { recursive: true });

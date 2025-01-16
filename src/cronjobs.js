@@ -33,7 +33,6 @@ async function updateCurrencyRates(){
             });
             rate.rate = exchangeRate;
             await rate.save();
-            rateList[rate.fromCurrency] = rate.rate;
           } catch(error) {
                 console.error(error);
           }

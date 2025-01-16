@@ -36,7 +36,11 @@ const globalErrorHandler = (err, req,res, next)=>{
         err = new AppError(err.errors[0].message, 400);
     }
     if(err.name === "SequelizeValidationError"){
-        err = new AppError(err.errors[0].message, 400);
+        let errorsForFields = {};
+        err.errors.forEach((item)=>{
+            errorsForFields[item.path] = item.message;
+        })
+        err = new AppError("Validation error", 400, errorsForFields);
     }
     if(process.env.NODE_ENV === "development"){
         return sendDevError(err, res)

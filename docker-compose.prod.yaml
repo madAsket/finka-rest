@@ -1,0 +1,43 @@
+services:
+  database:
+    image: postgres
+    container_name: finka-database
+    restart: unless-stopped
+    env_file: ./.env.production
+    environment:
+      - POSTGRES_USER=pguser
+      - POSTGRES_PASSWORD=675838568a0c8005ada57f297b641412
+      - POSTGRES_DB=finka_database
+    ports:
+      - 5433:5432
+    volumes:
+      - db:/var/lib/postgres
+  backend:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.prod
+    container_name: finka-backend
+    restart: always
+    env_file: ./.env.production
+    ports:
+      - "3000:3000"
+    command: sh -c "npx sequelize-cli db:migrate && npm start"
+    volumes:
+      - /home/upload:/app/upload/images
+    depends_on:
+      - database
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    container_name: finka-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    volumes:
+      - ./nginx/certs:/etc/nginx/ssl # Монтируем сертификаты
+volumes:
+  db:
+
